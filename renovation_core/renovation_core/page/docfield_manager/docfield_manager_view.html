@@ -1,0 +1,24 @@
+<div class="row" style="padding-top: 25px">
+	<div class="col-xs-12">
+		<label class="col-xs-6">
+			<span class="label-area small">Enabled</span>
+			<span class="octicon octicon-{% if(enabled) { %}check {% } else { %}x {% } %} pull-right"></span>
+		</label>
+		<div class="clearfix"></div>
+		<hr>
+	</div>
+	<div class="col-xs-12">
+		<ul class="list-group col-xs-12 col-sm-6" style="padding-left:15px;">
+			<li class="list-group-item active">Users</li>
+			{% for(let i=0; i < users.length; i++) { %}
+				<li class="list-group-item">{{ users[i].user }} <span class="octicon octicon-{% if(users[i].enabled) { %}check {% } else { %}x {% } %} pull-right"></span></li>
+			{% } %}
+		</ul>
+		<ul class="list-group col-xs-12 col-sm-6">
+			<li class="list-group-item active">User Profile</li>
+			{% for(let i=0; i < role_profiles.length; i++) { %}
+				<li class="list-group-item">{{ role_profiles[i].role_profile }} <span class="octicon octicon-{% if(role_profiles[i].enabled) { %}check {% } else { %}x {% } %} pull-right"></span></li>
+			{% } %}
+		</ul>
+	</div>
+</div>

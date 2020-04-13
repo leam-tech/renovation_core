@@ -1,0 +1,55 @@
+{
+ "creation": "2019-08-04 08:28:32.799351",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "fields": [
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Title"
+  },
+  {
+   "fieldname": "alt",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Alt"
+  },
+  {
+   "fieldname": "column_break_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "display_index",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Display Index"
+  },
+  {
+   "fieldname": "redirect_url",
+   "fieldtype": "Data",
+   "label": "Redirect To"
+  },
+  {
+   "fieldname": "section_break_6",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "file_url",
+   "fieldtype": "Attach Image",
+   "label": "Image"
+  }
+ ],
+ "istable": 1,
+ "modified": "2019-08-04 08:28:32.799351",
+ "modified_by": "Administrator",
+ "module": "Renovation Setup",
+ "name": "Renovation Image Ref",
+ "owner": "Administrator",
+ "permissions": [],
+ "quick_entry": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

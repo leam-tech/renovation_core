@@ -1,0 +1,155 @@
+{
+ "creation": "2019-01-20 19:20:50.941890",
+ "description": "A doctype for meta information regarding the dashboards",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "enable",
+  "title",
+  "subtitle",
+  "is_standard",
+  "module",
+  "custom_caching",
+  "column_break_4",
+  "type",
+  "exc_type",
+  "cmd",
+  "eval_code",
+  "section_break_9",
+  "params",
+  "roles",
+  "purge_cache"
+ ],
+ "fields": [
+  {
+   "default": "1",
+   "fieldname": "enable",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Enable"
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Title",
+   "reqd": 1
+  },
+  {
+   "fieldname": "subtitle",
+   "fieldtype": "Data",
+   "label": "Subtitle"
+  },
+  {
+   "default": "No",
+   "fieldname": "is_standard",
+   "fieldtype": "Select",
+   "label": "Is Standard ",
+   "options": "Yes\nNo"
+  },
+  {
+   "depends_on": "eval:doc.is_standard == \"Yes\"",
+   "fieldname": "module",
+   "fieldtype": "Link",
+   "label": "Module",
+   "options": "Module Def"
+  },
+  {
+   "fieldname": "column_break_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Type",
+   "options": "lines\nbar\npie\npercent\nchange\nsimple\nlist",
+   "reqd": 1
+  },
+  {
+   "default": "cmd",
+   "fieldname": "exc_type",
+   "fieldtype": "Select",
+   "label": "Exc Type",
+   "options": "eval\ncmd",
+   "reqd": 1
+  },
+  {
+   "depends_on": "eval:doc.exc_type==\"cmd\"",
+   "fieldname": "cmd",
+   "fieldtype": "Data",
+   "label": "cmd"
+  },
+  {
+   "depends_on": "eval:doc.exc_type==\"eval\"",
+   "fieldname": "eval_code",
+   "fieldtype": "Long Text",
+   "label": "Eval Code"
+  },
+  {
+   "fieldname": "section_break_9",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "params",
+   "fieldtype": "Table",
+   "label": "Params",
+   "options": "Renovation Dashboard Param"
+  },
+  {
+   "fieldname": "roles",
+   "fieldtype": "Table",
+   "label": "Roles",
+   "options": "Has Role"
+  },
+  {
+   "description": "Purge Cache On",
+   "fieldname": "purge_cache",
+   "fieldtype": "Table",
+   "label": "Purge Cache",
+   "options": "Renovation Purge Cache"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:doc.is_standard == \"Yes\"",
+   "fieldname": "custom_caching",
+   "fieldtype": "Check",
+   "label": "Custom Caching"
+  }
+ ],
+ "modified": "2020-03-27 11:09:34.010981",
+ "modified_by": "Administrator",
+ "module": "Renovation Dashboard Def",
+ "name": "Renovation Dashboard",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "All",
+   "share": 1
+  }
+ ],
+ "quick_entry": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

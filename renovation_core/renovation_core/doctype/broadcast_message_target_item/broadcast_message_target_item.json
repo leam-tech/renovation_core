@@ -1,0 +1,94 @@
+{
+ "actions": [],
+ "creation": "2020-01-08 21:46:48.628258",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "type",
+  "section_break_2",
+  "target_dt",
+  "filters",
+  "user_path",
+  "section_break_5",
+  "cmd",
+  "fcm_topic",
+  "emails",
+  "mobile_nos"
+ ],
+ "fields": [
+  {
+   "fieldname": "type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Type",
+   "options": "DocType\nCMD\nFCM Topic\nEmails\nMobile Nos",
+   "reqd": 1
+  },
+  {
+   "depends_on": "eval:doc.type == \"DocType\"",
+   "fieldname": "section_break_2",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "target_dt",
+   "fieldtype": "Link",
+   "label": "DocType",
+   "options": "DocType"
+  },
+  {
+   "fieldname": "filters",
+   "fieldtype": "Small Text",
+   "label": "Filters"
+  },
+  {
+   "depends_on": "eval:doc.type != \"DocType\"",
+   "fieldname": "section_break_5",
+   "fieldtype": "Section Break"
+  },
+  {
+   "depends_on": "eval:doc.type == \"CMD\"",
+   "fieldname": "cmd",
+   "fieldtype": "Data",
+   "label": "CMD"
+  },
+  {
+   "depends_on": "eval:doc.type == \"FCM Topic\"",
+   "fieldname": "fcm_topic",
+   "fieldtype": "Data",
+   "label": "FCM Topic"
+  },
+  {
+   "depends_on": "eval:doc.type == \"Emails\"",
+   "description": "Comma separated list of email ids",
+   "fieldname": "emails",
+   "fieldtype": "Small Text",
+   "label": "Emails"
+  },
+  {
+   "depends_on": "eval:doc.type == \"Mobile Nos\"",
+   "description": "Comma separated list of mobile numbers",
+   "fieldname": "mobile_nos",
+   "fieldtype": "Small Text",
+   "label": "Mobile Nos"
+  },
+  {
+   "description": "Please provide the link to the field that contains user docname, starting with this doc. eg: doc.service_provider.user, doc.service_type.service_provider.user",
+   "fieldname": "user_path",
+   "fieldtype": "Code",
+   "label": "User Path"
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2020-01-09 16:41:18.952542",
+ "modified_by": "Administrator",
+ "module": "Renovation Core",
+ "name": "Broadcast Message Target Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "quick_entry": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

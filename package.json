@@ -1,0 +1,18 @@
+{
+  "name": "renovation_core",
+  "version": "1.0.0",
+  "description": "The Frappe App for Renovation Front-End SDK",
+  "dependencies": {
+    "cookie": "^0.3.1",
+    "express": "^4.16.2",
+    "redis": "^2.8.0",
+    "socket.io": "^2.0.4",
+    "superagent": "^3.8.2"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "MIT"
+}

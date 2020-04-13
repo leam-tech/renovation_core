@@ -1,0 +1,69 @@
+{
+ "creation": "2020-03-14 23:00:29.912241",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "title",
+  "tooltip",
+  "is_group",
+  "target_type",
+  "target",
+  "nesting_level"
+ ],
+ "fields": [
+  {
+   "allow_in_quick_entry": 1,
+   "fieldname": "tooltip",
+   "fieldtype": "Data",
+   "label": "Tooltip"
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "default": "0",
+   "fieldname": "is_group",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Is Group"
+  },
+  {
+   "fieldname": "target_type",
+   "fieldtype": "Select",
+   "label": "Target Type",
+   "options": "DocType\nReport\nPage"
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "fieldname": "target",
+   "fieldtype": "Dynamic Link",
+   "in_list_view": 1,
+   "label": "Target",
+   "options": "target_type"
+  },
+  {
+   "fieldname": "nesting_level",
+   "fieldtype": "Int",
+   "label": "Nesting Level",
+   "reqd": 1
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Title",
+   "reqd": 1,
+   "translatable": 1
+  }
+ ],
+ "istable": 1,
+ "modified": "2020-03-28 22:25:56.327472",
+ "modified_by": "Administrator",
+ "module": "Renovation Core",
+ "name": "Renovation Sidebar Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "quick_entry": 1,
+ "sort_field": "modified",
+ "sort_order": "ASC",
+ "title_field": "renovation_sidebar_name",
+ "track_changes": 1
+}

@@ -1,0 +1,118 @@
+{
+ "autoname": "field:title",
+ "creation": "2019-06-30 14:40:33.271321",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "title",
+  "priority",
+  "column_break_2",
+  "enabled",
+  "can_resize_items",
+  "can_rearrange_items",
+  "sb2",
+  "dashboards",
+  "sb3",
+  "is_user_custom",
+  "user",
+  "roles"
+ ],
+ "fields": [
+  {
+   "default": "1",
+   "fieldname": "priority",
+   "fieldtype": "Select",
+   "label": "Priority",
+   "options": "1\n2\n3\n4\n5"
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "label": "Enabled"
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "label": "Title",
+   "unique": 1
+  },
+  {
+   "fieldname": "sb2",
+   "fieldtype": "Section Break",
+   "label": "Dashboards"
+  },
+  {
+   "fieldname": "dashboards",
+   "fieldtype": "Table",
+   "label": "Dashboards",
+   "options": "Renovation Dashboard Layout Item",
+   "reqd": 1
+  },
+  {
+   "fieldname": "sb3",
+   "fieldtype": "Section Break",
+   "label": "Permissions"
+  },
+  {
+   "default": "0",
+   "description": "If checked, this is a custom dashboard layout defined by User for his own personal convenience",
+   "fieldname": "is_user_custom",
+   "fieldtype": "Check",
+   "label": "Is Custom to User"
+  },
+  {
+   "depends_on": "is_user_custom",
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "label": "User",
+   "options": "User"
+  },
+  {
+   "depends_on": "eval:doc.is_user_custom !== 1",
+   "fieldname": "roles",
+   "fieldtype": "Table",
+   "label": "Roles",
+   "options": "Has Role"
+  },
+  {
+   "default": "1",
+   "fieldname": "can_resize_items",
+   "fieldtype": "Check",
+   "label": "Can Resize Items"
+  },
+  {
+   "default": "1",
+   "fieldname": "can_rearrange_items",
+   "fieldtype": "Check",
+   "label": "Can Rearrange Items"
+  }
+ ],
+ "modified": "2020-03-26 19:05:08.930435",
+ "modified_by": "Administrator",
+ "module": "Renovation Dashboard Def",
+ "name": "Renovation Dashboard Layout",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "quick_entry": 1,
+ "sort_field": "modified",
+ "sort_order": "ASC",
+ "track_changes": 1
+}

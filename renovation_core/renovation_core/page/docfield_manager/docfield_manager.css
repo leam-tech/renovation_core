@@ -1,0 +1,19 @@
+.input-area {
+    min-width: 20px;
+}
+
+input[type="checkbox"]:disabled:before {
+    background-color: lightgray;
+}
+
+input[type="checkbox"]:disabled:checked:before {
+    background-color: transparent;
+}
+
+.row.form-section > h3.text-muted {
+    color: lightgray
+}
+
+.help-box.small.text-muted {
+    float: left;
+}

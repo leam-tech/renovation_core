@@ -1,0 +1,24 @@
+{
+ "content": null, 
+ "creation": "2018-07-05 16:59:59.679214", 
+ "docstatus": 0, 
+ "doctype": "Page", 
+ "icon": "", 
+ "idx": 0, 
+ "modified": "2019-02-27 17:09:30.985973", 
+ "modified_by": "Administrator", 
+ "module": "Renovation Core", 
+ "name": "DocField Manager", 
+ "owner": "Administrator", 
+ "page_name": "DocField Manager", 
+ "roles": [
+  {
+   "role": "Administrator"
+  }
+ ], 
+ "script": null, 
+ "standard": "Yes", 
+ "style": null, 
+ "system_page": 0, 
+ "title": "Renovation DocField Manager"
+}
