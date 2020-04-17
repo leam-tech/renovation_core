@@ -1,10 +1,16 @@
 from __future__ import unicode_literals
 
+import logging
+import os
+
 import frappe
-from frappe.app import (NotFound, _site, _sites_path, after_request,
+from frappe.app import (NotFound, after_request,
                         get_site_name, handle_exception, local_manager,
                         make_form_dict)
+from frappe.middlewares import StaticDataMiddleware
 from werkzeug.exceptions import HTTPException
+from werkzeug.middleware.profiler import ProfilerMiddleware
+from werkzeug.middleware.shared_data import SharedDataMiddleware
 from werkzeug.wrappers import Request, Response
 
 from .auth import RenovationHTTPRequest
@@ -22,7 +28,7 @@ def application(request):
 
     frappe.recorder.record()
 
-    if should_redirect_http():
+    if should_redirect_http() and 'localhost' not in application.config['SERVER_NAME']:
       response = Response(status=302, headers={
           "Location": "https://{}{}".format(frappe.request.host, frappe.request.path)})
 
@@ -74,6 +80,43 @@ def application(request):
 
 # just like how it is done in frappe.app
 application = local_manager.make_middleware(application)
+
+
+def serve(port=8000, profile=False, no_reload=False, no_threading=False, site=None, sites_path='.'):
+  global application, _site, _sites_path
+  _site = site
+  _sites_path = sites_path
+
+  from werkzeug.serving import run_simple
+
+  if profile:
+    application = ProfilerMiddleware(
+        application, sort_by=('cumtime', 'calls'))
+
+  if not os.environ.get('NO_STATICS'):
+    application = SharedDataMiddleware(application, {
+        str('/assets'): str(os.path.join(sites_path, 'assets'))
+    })
+
+    application = StaticDataMiddleware(application, {
+        str('/files'): str(os.path.abspath(sites_path))
+    })
+
+  application.debug = True
+  application.config = {
+      'SERVER_NAME': 'localhost:8000'
+  }
+
+  in_test_env = os.environ.get('CI')
+  if in_test_env:
+    log = logging.getLogger('werkzeug')
+    log.setLevel(logging.ERROR)
+
+  run_simple('0.0.0.0', int(port), application,
+             use_reloader=False if in_test_env else not no_reload,
+             use_debugger=not in_test_env,
+             use_evalex=not in_test_env,
+             threaded=not no_threading)
 
 
 def init_request(request):
