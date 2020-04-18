@@ -58,6 +58,8 @@ def update_procfile():
 
     proc = proc.replace("apps/frappe/socketio.js",
                         "apps/renovation_core/socketio.js")
+    proc = proc.replace("bench serve", "bench renovation serve")
+
     f.seek(0)
     f.write(proc)
 
