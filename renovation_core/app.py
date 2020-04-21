@@ -4,7 +4,7 @@ import logging
 import os
 
 import frappe
-from frappe.app import (NotFound, after_request,
+from frappe.app import (NotFound, after_request, _site, _sites_path,
                         get_site_name, handle_exception, local_manager,
                         make_form_dict)
 from frappe.middlewares import StaticDataMiddleware
