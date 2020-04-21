@@ -28,7 +28,7 @@ def application(request):
 
     frappe.recorder.record()
 
-    if should_redirect_http() and 'localhost' not in application.config['SERVER_NAME']:
+    if should_redirect_http() and not hasattr(application, 'config'):
       response = Response(status=302, headers={
           "Location": "https://{}{}".format(frappe.request.host, frappe.request.path)})
 
