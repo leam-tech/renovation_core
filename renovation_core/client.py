@@ -43,6 +43,11 @@ def get_single_value(doctype, field, translateable_fields=None, lang=None):
   return check_and_translate_values(data, translateable_fields, lang)
 
 
+@frappe.whitelist(allow_guest=True)
+def get_ldap_client_settings():
+  from frappe.integrations.doctype.ldap_settings.ldap_settings import LDAPSettings
+  return LDAPSettings.get_ldap_client_settings()
+
 def check_and_translate_values(data, translateable_fields=None, lang=None):
   if frappe.session.user and not lang:
     lang = frappe.get_cached_value('User', frappe.session.user, 'language')
