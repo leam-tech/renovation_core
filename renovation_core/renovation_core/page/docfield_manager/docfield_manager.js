@@ -24,6 +24,37 @@ class DocFieldManager {
 		this.c_form_layout_wrapper = $(`<div></div>`).appendTo(this.page.main)
 		this.doc_field_iotions = {}
 		this.make()
+		this.make_buttons()
+	}
+
+	make_buttons() {
+		let me = this;
+		["Select All", "Unselect All", "Select All Mandetory"].forEach(d => {
+			$(this.page.add_field({
+				label: __(d),
+				fieldname: frappe.scrub(d),
+				fieldtype: "Button",
+				click: () => {
+					me.checkbox_toggle(d);
+				}
+			}).wrapper).children().addClass('btn-primary');
+		});
+	}
+	checkbox_toggle(select) {
+		if (!this.c_form_layout)
+			return;
+		let checked = select === 'Unselect All';
+		let selector = `input:enabled:checkbox`
+		$(this.c_form_layout.wrapper).find('.form-group.frappe-control').map((idx, element) => {
+			if (select === "Select All Mandetory") {
+				if ($(element).hasClass('has-error')) {
+					checked = false
+				} else {
+					checked = true
+				}
+			}
+			$(element).find(selector).prop("checked", checked).trigger('click');
+		});
 	}
 
 	make() {
@@ -47,7 +78,7 @@ class DocFieldManager {
 				onchange: () => {
 					this.toggle_optional_fields()
 				},
-				default:'Global'
+				default: 'Global'
 			},
 			{
 				label: 'User',
@@ -79,7 +110,7 @@ class DocFieldManager {
 				}
 			}
 		]
-		fields.forEach(field=>{
+		fields.forEach(field => {
 			this.page.add_field(field)
 		})
 		this.toggle_optional_fields()
@@ -89,8 +120,8 @@ class DocFieldManager {
 	}
 	toggle_optional_fields() {
 		this.action_for = this.page.fields_dict.action_for.value
-		$.each({'user': 'User', 'role_profile': 'Role Profile', 'doc_field':'View'}, (i, f)=>{
-			this.page.fields_dict[i].$wrapper.toggle(f===this.action_for)
+		$.each({ 'user': 'User', 'role_profile': 'Role Profile', 'doc_field': 'View' }, (i, f) => {
+			this.page.fields_dict[i].$wrapper.toggle(f === this.action_for)
 		})
 		this.ondoctype_changed()
 	}
@@ -102,15 +133,15 @@ class DocFieldManager {
 			values: this.get_serialize_values_for_action(),
 			action_for: this.action_for
 		}
-		if (this.action_for==="User") {
-			if (!this.user){
+		if (this.action_for === "User") {
+			if (!this.user) {
 				frappe.msgprint(__("Please select User"))
 				return
 			}
 			args['user'] = this.user
-		} else if (this.action_for==="Role Profile") {
+		} else if (this.action_for === "Role Profile") {
 			args['role_profile'] = this.role_profile
-			if (!this.role_profile){
+			if (!this.role_profile) {
 				frappe.msgprint(__("Please select Role Profile"))
 				return
 			}
@@ -121,15 +152,15 @@ class DocFieldManager {
 			freeze: true,
 			callback: r => {
 				if (!r.xhr)
-					frappe.show_alert({message:__("Updated"), indicator: 'green'})
+					frappe.show_alert({ message: __("Updated"), indicator: 'green' })
 			}
 		})
-	} 
+	}
 
 	get_serialize_values_for_action(action_for) {
-		let data  ={}
+		let data = {}
 		let action = action_for || this.action_for
-		this.c_form_layout_wrapper.find(':checkbox[data-action_for="'+action+'"]:checked').each((i, e)=>{
+		this.c_form_layout_wrapper.find(':checkbox[data-action_for="' + action + '"]:checked').each((i, e) => {
 			let doctype = $(e).attr('data-doctype')
 			if (typeof data[doctype] === "undefined")
 				data[doctype] = [];
@@ -145,15 +176,15 @@ class DocFieldManager {
 		if (!this.doctype)
 			return
 		this.c_form_layout_wrapper.empty()
-		if (this.action_for==="View"){
+		if (this.action_for === "View") {
 			return this.make_doc_field_view()
 		}
 		let args = {
 			doctype: this.doctype
 		}
-		if (this.action_for==="User") {
+		if (this.action_for === "User") {
 			args['user'] = this.user
-		} else if (this.action_for==="Role Profile") {
+		} else if (this.action_for === "Role Profile") {
 			args['role_profile'] = this.role_profile
 		}
 		frappe.call({
@@ -191,18 +222,18 @@ class DocFieldManager {
 	}
 	set_options_foe_view_field() {
 		let field = this.page.fields_dict.doc_field;
-		if (field.$input.attr('data-optionsof')===this.doctype)
+		if (field.$input.attr('data-optionsof') === this.doctype)
 			return;
-		if(this.doc_field_iotions[this.doctype]) {
+		if (this.doc_field_iotions[this.doctype]) {
 			field.df.options = this.doc_field_iotions[this.doctype]
 			field.refresh_input()
-		}else {
+		} else {
 			frappe.call({
 				method: 'frappe.custom.doctype.custom_field.custom_field.get_fields_label',
 				args: { doctype: this.doctype },
 				freeze: true,
 				callback: r => {
-					if(!r.xhr) {
+					if (!r.xhr) {
 						this.doc_field_iotions[this.doctype] = r.message;
 						field.df.options = this.doc_field_iotions[this.doctype]
 						field.refresh_input()
@@ -216,7 +247,7 @@ class DocFieldManager {
 
 renovation.FormLayout = class FormLayout {
 	constructor(options) {
-		this.fields_dict ={}
+		this.fields_dict = {}
 		this.fields_list = []
 		this.sections = []
 		$.extend(this, options)
@@ -225,18 +256,18 @@ renovation.FormLayout = class FormLayout {
 	make() {
 		this.wrapper = $('<div class="form-layout">').appendTo(this.parent);
 		let me = this;
-		if (typeof this.doctypes_fields[this.first_doctype] !=="undefined"){
+		if (typeof this.doctypes_fields[this.first_doctype] !== "undefined") {
 			this.doctype = this.first_doctype
 			this.render(this.doctypes_fields[this.first_doctype]);
 		}
-		$.each(me.doctypes_fields, (key, fields)=> {
-			if (key !== me.first_doctype){
+		$.each(me.doctypes_fields, (key, fields) => {
+			if (key !== me.first_doctype) {
 				me.doctype = key
 				me.render(fields)
 			}
 		})
 	}
-	render (new_fields) {
+	render(new_fields) {
 		var me = this;
 		var fields = new_fields || this.fields;
 
@@ -246,9 +277,9 @@ renovation.FormLayout = class FormLayout {
 		if (this.no_opening_section(fields)) {
 			this.make_section();
 		}
-		$.each(fields, function(i, df) {
+		$.each(fields, function (i, df) {
 			df.org_fieldtype = df.fieldtype
-			switch(df.fieldtype) {
+			switch (df.fieldtype) {
 				case "Fold":
 					me.make_page(df);
 					break;
@@ -262,23 +293,23 @@ renovation.FormLayout = class FormLayout {
 					df.fieldtype = "Check"
 					me.make_field(df);
 			}
-			if (i==0)
+			if (i == 0)
 				me.section.wrapper.prepend(`<h3 calss="text-muted">${me.doctype}</h3>`);
 		});
 
 	}
 
 	no_opening_section(fields) {
-		return (fields[0] && fields[0].fieldtype!="Section Break") || !fields.length;
+		return (fields[0] && fields[0].fieldtype != "Section Break") || !fields.length;
 	}
 
-	make_section (df) {
+	make_section(df) {
 		if (typeof df !== "undefined" && !df.label && df.fieldname)
 			df.label = df.fieldname;
 		this.section = new frappe.ui.form.Section(this, df);
 
 		// append to layout fields
-		if(df) {
+		if (df) {
 			this.fields_dict[df.fieldname] = this.section;
 			this.fields_list.push(this.section);
 			if (df.fieldname)
@@ -289,7 +320,7 @@ renovation.FormLayout = class FormLayout {
 	}
 	make_column(df) {
 		this.column = new frappe.ui.form.Column(this.section, df);
-		if(df && df.fieldname) {
+		if (df && df.fieldname) {
 			this.fields_list.push(this.column);
 			if (!df.label)
 				df.label = df.fieldname;
@@ -314,9 +345,9 @@ renovation.FormLayout = class FormLayout {
 			doctype: this.doctype,
 			disp_status: "Write",
 			action_for: this.action_for,
-			value:this.doctypes_selected && this.doctypes_selected['Global'] && this.doctypes_selected['Global'][this.doctype] && this.doctypes_selected['Global'][this.doctype].includes(df.fieldname),
-			user_value:this.doctypes_selected && this.doctypes_selected['User'] && this.doctypes_selected['User'][this.doctype] && this.doctypes_selected['User'][this.doctype].includes(df.fieldname),
-			role_profile_value:this.doctypes_selected && this.doctypes_selected['Role Profile'] && this.doctypes_selected['Role Profile'][this.doctype] && this.doctypes_selected['Role Profile'][this.doctype].includes(df.fieldname)
+			value: this.doctypes_selected && this.doctypes_selected['Global'] && this.doctypes_selected['Global'][this.doctype] && this.doctypes_selected['Global'][this.doctype].includes(df.fieldname),
+			user_value: this.doctypes_selected && this.doctypes_selected['User'] && this.doctypes_selected['User'][this.doctype] && this.doctypes_selected['User'][this.doctype].includes(df.fieldname),
+			role_profile_value: this.doctypes_selected && this.doctypes_selected['Role Profile'] && this.doctypes_selected['Role Profile'][this.doctype] && this.doctypes_selected['Role Profile'][this.doctype].includes(df.fieldname)
 		});
 		fieldobj.refresh_input()
 		fieldobj.layout = this;
@@ -326,8 +357,8 @@ renovation.FormLayout = class FormLayout {
 
 
 renovation.CheckBox = frappe.ui.form.ControlCheck.extend({
-	make_wrapper: function() {
-		this.$wrapper = $(`<div class="form-group frappe-control ${this.df.reqd?'has-error':''}">\
+	make_wrapper: function () {
+		this.$wrapper = $(`<div class="form-group frappe-control ${this.df.reqd ? 'has-error' : ''}">\
 			<div class="checkbox">\
 				<label class="col-xs-12">\
 					<span class="input-area"></span>\
@@ -340,74 +371,74 @@ renovation.CheckBox = frappe.ui.form.ControlCheck.extend({
 			</div>\
 		</div>`).appendTo(this.parent);
 	},
-	set_input_areas: function() {
+	set_input_areas: function () {
 		this._super()
 		this.user_input_area = this.$wrapper.find(".user_input_area").get(0);
 		this.role_profile_input_area = this.$wrapper.find(".role_profile_input_area").get(0);
 	},
-	make_input: function() {
+	make_input: function () {
 		this._super()
 		this.$input
-			.prop('disabled', this.action_for!=="Global")
+			.prop('disabled', this.action_for !== "Global")
 			.attr("data-action_for", 'Global');
 		// User Input Filed
-		this.$user_input = $("<"+ this.html_element +">")
-		.attr("type", this.input_type)
-		.attr("autocomplete", "off")
-		.addClass("input-with-feedback form-control")
-		.prependTo(this.user_input_area);
+		this.$user_input = $("<" + this.html_element + ">")
+			.attr("type", this.input_type)
+			.attr("autocomplete", "off")
+			.addClass("input-with-feedback form-control")
+			.prependTo(this.user_input_area);
 		this.$user_input
 			.attr("data-fieldtype", this.df.fieldtype)
 			.attr("data-fieldname", this.df.fieldname)
 			.attr("data-action_for", 'User')
 			.attr("title", "User")
-			.prop('disabled', this.action_for!=="User")
+			.prop('disabled', this.action_for !== "User")
 			.prop('checked', this.user_value);
-		if(this.doctype) {
+		if (this.doctype) {
 			this.$user_input.attr("data-doctype", this.doctype);
 		}
 		// Profile Role Input
-		this.$role_profile_input = $("<"+ this.html_element +">")
-		.attr("type", this.input_type)
-		.attr("autocomplete", "off")
-		.addClass("input-with-feedback form-control")
-		.prependTo(this.role_profile_input_area);
+		this.$role_profile_input = $("<" + this.html_element + ">")
+			.attr("type", this.input_type)
+			.attr("autocomplete", "off")
+			.addClass("input-with-feedback form-control")
+			.prependTo(this.role_profile_input_area);
 		this.$role_profile_input
 			.attr("data-fieldtype", this.df.fieldtype)
 			.attr("data-fieldname", this.df.fieldname)
 			.attr("data-action_for", 'Role Profile')
 			.attr("title", "Role Profile")
-			.prop('disabled', this.action_for!=="Role Profile")
+			.prop('disabled', this.action_for !== "Role Profile")
 			.prop('checked', this.role_profile_value);
-		if(this.doctype) {
+		if (this.doctype) {
 			this.$role_profile_input.attr("data-doctype", this.doctype);
 		}
 
 	},
-	set_label: function(label) {
-		if(label) this.df.label = label;
+	set_label: function (label) {
+		if (label) this.df.label = label;
 
-		if(this.only_input || this.df.label==this._label)
+		if (this.only_input || this.df.label == this._label)
 			return;
 
 		var icon = "";
-		this.label_span.innerHTML = (icon ? '<i class="'+icon+'"></i> ' : "") +
-			__(this.df.label) + "<strong>&nbsp;("+ this.df.org_fieldtype +")</strong>"  || "&nbsp;";
+		this.label_span.innerHTML = (icon ? '<i class="' + icon + '"></i> ' : "") +
+			__(this.df.label) + "<strong>&nbsp;(" + this.df.org_fieldtype + ")</strong>" || "&nbsp;";
 		this._label = this.df.label;
 	},
-	set_mandatory: function() {
+	set_mandatory: function () {
 		//this.$wrapper.toggleClass("has-error", this.df.reqd);
 	}
 })
 
 
 renovation.DocFieldViewer = class DocFieldViewer {
-	constructor(options){
+	constructor(options) {
 		$.extend(this, options)
 		this.values = {}
 		this.key = this.doctype + '-' + this.fieldname
 		console.log(this.key)
-		if(typeof this.values[this.key] !== "undefined") {
+		if (typeof this.values[this.key] !== "undefined") {
 			this.render()
 		} else {
 			frappe.call({
@@ -418,7 +449,7 @@ renovation.DocFieldViewer = class DocFieldViewer {
 				},
 				freeze: true,
 				callback: r => {
-					if(r['message']){
+					if (r['message']) {
 						this.values[this.key] = {
 							"enabled": r.message.renovation_enabled,
 							"users": r.message.users,
@@ -433,6 +464,6 @@ renovation.DocFieldViewer = class DocFieldViewer {
 	render() {
 		let val = this.values[this.key]
 		this.wrapper = $(frappe.render_template('docfield_manager_view', val))
-		.appendTo(this.parent)
+			.appendTo(this.parent)
 	}
 }
