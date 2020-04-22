@@ -1,6 +1,6 @@
 {
   "name": "renovation_core",
-  "version": "1.0.1",
+  "version": "1.0.5",
   "description": "The Frappe App for Renovation Front-End SDK",
   "dependencies": {
     "cookie": "^0.3.1",
