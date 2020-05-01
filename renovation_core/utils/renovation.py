@@ -70,6 +70,10 @@ def get_user_sidebar(user=None):
   if frappe.db.exists("Renovation Sidebar", s):
     return s
 
+  # User.roles doesnt include the role "All" saved in the backend
+  # the role "All" wont get joined in the below query
+
+  # Check for sidebars with specific roles
   sidebars = frappe.db.sql("""
 	SELECT DISTINCT
 		role_sidebar.parent
@@ -81,7 +85,22 @@ def get_user_sidebar(user=None):
 			AND role_sidebar.parentfield = "applicable_roles"
 			AND role_user.parenttype = "User"
 			AND role_user.parent = %(user)s
-	""", {"user": user}, debug=1)
+	""", {"user": user})
+
+  if not len(sidebars):
+    # no sidebars found with a specific role attached
+    # lets check for a sidebar defined for role 'All'
+    sidebars = frappe.db.sql("""
+      SELECT DISTINCT
+        role_sidebar.parent
+      FROM `tabHas Role` role_sidebar
+      WHERE
+        role_sidebar.parenttype = "Renovation Sidebar"
+        AND role_sidebar.role = "All"
+        AND role_sidebar.parentfield = "applicable_roles"
+      ORDER BY
+        creation desc
+    """)
 
   if not len(sidebars):
     return None
