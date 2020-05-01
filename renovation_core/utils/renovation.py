@@ -67,7 +67,7 @@ def get_user_sidebar(user=None):
     user = frappe.session.user
 
   s = frappe.cache().hget(REDIS_USER_SIDEBAR, user)
-  if s:
+  if frappe.db.exists("Renovation Sidebar", s):
     return s
 
   sidebars = frappe.db.sql("""
