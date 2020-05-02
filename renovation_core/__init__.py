@@ -5,6 +5,7 @@ import frappe.core.doctype.sms_settings.sms_settings
 import frappe.model.sync
 from frappe.email.doctype.notification.notification import Notification
 from frappe.model.meta import Meta
+from frappe.utils import cint
 
 from .renovation_dashboard_def.utils import clear_dashboard_cache
 from .utils.notification import send_notification
@@ -40,7 +41,7 @@ def on_login(login_manager):
 
 def on_session_creation(login_manager):
   from .utils.auth import make_jwt
-  if frappe.form_dict.get('use_jwt'):
+  if frappe.form_dict.get('use_jwt') and cint(frappe.form_dict.get('use_jwt')):
     frappe.local.response['token'] = make_jwt(
         login_manager.user, frappe.flags.get('jwt_expire_on'))
     frappe.flags.jwt_clear_cookies = True
