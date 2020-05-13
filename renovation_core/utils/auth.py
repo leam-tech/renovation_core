@@ -42,7 +42,8 @@ def generate_sms_pin():
     msg = msg + u". " + hash
   sms = send_sms([mobile], msg, success_msg=False)
   status = "fail"
-  if sms and isinstance(sms, list) and mobile in sms:
+  # Since SMS Settings might remove or add '+' character, we will check against the last 5 digits
+  if sms and isinstance(sms, list) and len(sms) == 1 and mobile[-5:] in sms[0]:
     status = "success"
   update_http_response({"status": status, "mobile": mobile})
 
