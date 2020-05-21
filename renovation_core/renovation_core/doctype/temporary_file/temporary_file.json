@@ -1,0 +1,75 @@
+{
+ "creation": "2020-05-21 11:56:26.380960",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "file",
+  "target_dt",
+  "target_dn",
+  "target_df",
+  "expires_in_hours"
+ ],
+ "fields": [
+  {
+   "fieldname": "file",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "File",
+   "reqd": 1
+  },
+  {
+   "fieldname": "target_dt",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Target DT",
+   "options": "DocType",
+   "reqd": 1
+  },
+  {
+   "fieldname": "target_dn",
+   "fieldtype": "Dynamic Link",
+   "label": "Target DN",
+   "options": "target_dt"
+  },
+  {
+   "fieldname": "target_df",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Target DF",
+   "reqd": 1
+  },
+  {
+   "default": "5",
+   "fieldname": "expires_in_hours",
+   "fieldtype": "Int",
+   "label": "Expires In Hours",
+   "reqd": 1
+  }
+ ],
+ "modified": "2020-05-21 13:55:59.355762",
+ "modified_by": "Administrator",
+ "module": "Renovation Core",
+ "name": "Temporary File",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "role": "All"
+  },
+  {
+   "create": 1,
+   "role": "Guest"
+  }
+ ],
+ "quick_entry": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC"
+}
