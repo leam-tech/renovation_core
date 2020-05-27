@@ -5,9 +5,9 @@
  "engine": "InnoDB",
  "field_order": [
   "file",
-  "target_dt",
-  "target_dn",
-  "target_df",
+  "target_doctype",
+  "target_docname",
+  "target_fieldname",
   "expires_in_hours"
  ],
  "fields": [
@@ -19,35 +19,35 @@
    "reqd": 1
   },
   {
-   "fieldname": "target_dt",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "label": "Target DT",
-   "options": "DocType",
-   "reqd": 1
-  },
-  {
-   "fieldname": "target_dn",
-   "fieldtype": "Dynamic Link",
-   "label": "Target DN",
-   "options": "target_dt"
-  },
-  {
-   "fieldname": "target_df",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "Target DF",
-   "reqd": 1
-  },
-  {
    "default": "5",
    "fieldname": "expires_in_hours",
    "fieldtype": "Int",
    "label": "Expires In Hours",
    "reqd": 1
+  },
+  {
+   "fieldname": "target_doctype",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Target DocType",
+   "options": "DocType",
+   "reqd": 1
+  },
+  {
+   "fieldname": "target_docname",
+   "fieldtype": "Dynamic Link",
+   "label": "Target DocName",
+   "options": "target_doctype"
+  },
+  {
+   "fieldname": "target_fieldname",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Target Fieldname",
+   "reqd": 1
   }
  ],
- "modified": "2020-05-21 13:55:59.355762",
+ "modified": "2020-05-27 14:50:58.145302",
  "modified_by": "Administrator",
  "module": "Renovation Core",
  "name": "Temporary File",
