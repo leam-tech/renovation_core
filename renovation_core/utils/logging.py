@@ -125,7 +125,8 @@ def logging_enabled(response):
   logging_settings = frappe.cache().get_value("logging_settings")
 
   if not logging_settings:
-    return False
+    update_cache()
+    return logging_enabled(response)
 
   if logging_settings.always_log_4xx_request and response.status_code in range(400, 600):
     return True
