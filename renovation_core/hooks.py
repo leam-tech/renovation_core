@@ -132,6 +132,12 @@ doc_events = {
 # Scheduled Tasks
 # ---------------
 
+scheduler_events = {
+    "hourly": [
+        "renovation_core.utils.temporary_files.flush_files"
+    ]
+}
+
 # scheduler_events = {
 # 	"all": [
 # 		"renovation_core.tasks.all"
