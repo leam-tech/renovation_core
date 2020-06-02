@@ -146,6 +146,10 @@ def update_cache():
                                       ["log_all_requests", "always_log_4xx_request",
                                        "limit_logging_to_apps"],
                                       as_dict=1)
+  if not logging_settings:
+    # there are some rare conditions when this can be null
+    # maybe when frappe errored out before init db?
+    logging_settings = frappe._dict()
   logging_settings.log_all_requests = cint(
       logging_settings.get("log_all_requests", 0))
   logging_settings.always_log_4xx_request = cint(
