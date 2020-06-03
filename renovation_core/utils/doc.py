@@ -49,7 +49,7 @@ def post_doc(doctype):
     doc.insert()
 
     apply_docdefaults(doc, doc, doctype, evaluation_time="After Save")
-    doc.save()
+    doc.save(ignore_permissions=True)
 
     # check submittable
     # check_submittable(doc, "submit")
