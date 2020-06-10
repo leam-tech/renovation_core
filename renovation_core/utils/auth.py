@@ -156,3 +156,8 @@ def make_jwt(user, expire_on=None, secret=None):
       id_token, secret, algorithm='HS256', headers=id_token_header).decode("ascii")
   frappe.flags.jwt = token_encoded
   return token_encoded
+
+
+@frappe.whitelist()
+def get_jwt_token():
+  return make_jwt(user=frappe.session.user)
