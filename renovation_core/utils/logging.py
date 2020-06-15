@@ -52,6 +52,12 @@ def make_log(**kwargs):
       "Accept": "application/json",
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.163 Safari/537.36'
   })
+  if not frappe.get_site_config().get("log_url"):
+    # frappe.local.request will exist when invoked over API
+    # background workers wont have 'request'
+    if hasattr(frappe.local, "request"):
+      frappe.throw("No Log URL is mentioned in the site_config")
+    return "no-log-url"
   r = requests.post(
       frappe.get_site_config().get("log_url"),
       json=frappe._dict(
