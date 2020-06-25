@@ -64,12 +64,15 @@ class UpdatedDBQuery(DatabaseQuery):
     for d in data or []:
       for i in self.with_link_fields:
         if d.get(i):
-          _lilnk_dict.setdefault(i, []).append(d.get(i))
+          opt = self.meta.get_options(i) if self.meta.get_field(i).fieldtype=="Link" else d.get(self.meta.get_options(i))
+          key = '{}:{}'.format(i, opt)
+          _lilnk_dict.setdefault(key, []).append(d.get(i))
     for l in _lilnk_dict:
-      if not (self.meta.has_field(l) and self.meta.get_options(l)):
+      field, options = l.split(':')
+      if not (self.meta.has_field(field) and options):
         continue
       _d = frappe.db.sql('''select * from `tab{}` where name in ('{}')'''.format(
-          self.meta.get_options(l), "', '".join(_lilnk_dict[l])), as_dict=True)
+          options, "', '".join(_lilnk_dict[l])), as_dict=True)
       for d in _d:
         _docs[d.name] = d
     for d in data or []:
