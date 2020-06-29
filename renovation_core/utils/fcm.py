@@ -335,11 +335,11 @@ def mark_all_as_disable(_user=None, filters=None):
 
 @frappe.whitelist()
 def mark_notification_disable(message_id):
-  return toggle_notification_disble(message_id, 1)
+  return toggle_notification_disable(message_id, 1)
 
 
 @frappe.whitelist()
-def toggle_notification_disble(message_id, disable=1):
+def toggle_notification_disable(message_id, disable=1):
   frappe.db.set_value('Communication', {"message_id": message_id}, 'disable', disable, update_modified=False)
   return 'Success'
 
