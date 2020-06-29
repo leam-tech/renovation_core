@@ -290,7 +290,8 @@ def get_user_notifications(limit_start=0, limit_page_length=20, _user=None, just
 
   _filters.update({
       "communication_medium": "FCM",
-      "user": user
+      "user": user,
+      'ifnull(disable, 0)': 0
   })
   if not just_unseen is None:
     _filters["seen"] = cint(just_unseen)
@@ -313,6 +314,51 @@ def get_user_notifications(limit_start=0, limit_page_length=20, _user=None, just
     ret.append(data)
 
   return ret
+
+
+@frappe.whitelist()
+def mark_all_as_disable(_user=None, filters=None):
+  user = _user or frappe.session.user
+
+  _filters = filters or frappe._dict()
+
+  _filters.update({
+      "communication_medium": "FCM",
+      "user": user,
+      "ifnull(disable, 0)": 0
+  })
+  names = frappe.get_all('Communication', _filters)
+  if names:
+    frappe.db.set_value('Communication', {'name': ('in', [x.name for x in names])}, 'disable', 1, update_modified=False)
+  return 'Success'
+
+
+@frappe.whitelist()
+def mark_notification_disable(message_id):
+  return toggle_notification_disable(message_id, 1)
+
+
+@frappe.whitelist()
+def toggle_notification_disable(message_id, disable=1):
+  frappe.db.set_value('Communication', {"message_id": message_id}, 'disable', disable, update_modified=False)
+  return 'Success'
+
+
+@frappe.whitelist()
+def mark_all_as_read(_user=None, filters=None):
+  user = _user or frappe.session.user
+
+  _filters = filters or frappe._dict()
+
+  _filters.update({
+      "communication_medium": "FCM",
+      "user": user,
+      "seen": 0
+  })
+  names = frappe.get_all('Communication', _filters)
+  if names:
+    frappe.db.set_value('Communication', {'name': ('in', [x.name for x in names])}, 'seen', 1, update_modified=False)
+  return 'Success'
 
 
 @frappe.whitelist()
