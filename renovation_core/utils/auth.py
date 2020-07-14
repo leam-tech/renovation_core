@@ -5,37 +5,34 @@ import jwt
 from frappe import _
 from frappe.auth import LoginManager
 from frappe.utils import cint
-from frappe.utils.password import check_password
+from frappe.utils.password import check_password, passlibctx
 from renovation_core.utils import update_http_response
 
 from .sms_setting import send_sms
 
 
 def generate_sms_pin():
+  # we generate new pin on each call, ignoring previous pins
   mobile = frappe.local.form_dict.mobile
-  newPIN = cint(frappe.local.form_dict.newPIN or "0")
+
   # If mobile needs to automatically the received
   hash = frappe.local.form_dict.hash
 
   if not mobile:
     frappe.throw("No Mobile Number")
 
-  # check cache for pin
-  pin = frappe.safe_decode(frappe.cache().get("sms:" + mobile))
   user = get_linked_user(mobile)
 
-  if not pin and user:
-    # check if available in db
-    pin = frappe.db.get_value("User", user, "renovation_sms_pin")
+  # generate a pin
+  pin = frappe.safe_decode(str(get_pin()))
 
-  if not pin or newPIN:
-    # generate a pin
-    pin = frappe.safe_decode(str(get_pin()))
-    frappe.cache().set("sms:" + mobile, pin)
-    # save in User doc if mobile linked to any User
-    if user:
-      frappe.db.set_value("User", user, "renovation_sms_pin",
-                          pin, update_modified=False)
+  # saving the hashed pin, not the pin as is
+  hashed_pin = passlibctx.hash(pin)
+  expires_in_sec = 15 * 60
+  if user:
+    frappe.cache().set_value(f"sms_user:{user}:{mobile}", hashed_pin, expires_in_sec=expires_in_sec)
+  else:
+    frappe.cache().set_value(f"sms:{mobile}", hashed_pin, expires_in_sec=expires_in_sec)
 
   msg = u"Your verification OTP is: " + pin
   if hash:
@@ -55,38 +52,33 @@ def verify_sms_pin():
 
   if not mobile:
     frappe.throw("No Mobile Number")
+  
+  def http_response(out):
+    update_http_response({"status": out, "mobile": mobile})
 
-  verify_pin = frappe.safe_decode(frappe.cache().get("sms:" + mobile))
-  user = get_linked_user(mobile)
-  if user:
-    # try to get from User
-    pin_from_db = frappe.db.get_value("User", user, "renovation_sms_pin")
-
-    if (not pin_from_db or len(pin_from_db) < 2) and verify_pin:
-      frappe.db.set_value("User", user, "renovation_sms_pin", verify_pin)
-    elif pin_from_db != verify_pin:
-      # preference for db pin
-      frappe.cache().set("sms:" + mobile, pin)
-      verify_pin = pin_from_db
-
-  out = "no_pin_for_mobile"
+  user = None
   if login:
-    out = "no_linked_user"
-  if verify_pin:
-    out = "invalid_pin"
-  if verify_pin and pin == verify_pin:
-    out = "verified"
+    user = get_linked_user(mobile)
+    if not user:
+      return http_response("no_linked_user")
 
-    if login == 1:
-      if user:
-        l = LoginManager()
-        l.login_as(user)
-        l.resume = False
-        l.run_trigger('on_session_creation')
-      else:
-        out = "user_not_found"
+  redis_key = f"sms_user:{user}:{mobile}" if login else f"sms:{mobile}"
+  hashed_pin = frappe.safe_decode(frappe.cache().get_value(redis_key, expires=True))
 
-  update_http_response({"status": out, "mobile": mobile})
+  if not hashed_pin:
+    return http_response("no_pin_for_mobile")
+
+  if not passlibctx.verify(pin, hashed_pin):
+    return http_response("invalid_pin")
+
+  if login == 1:
+    l = LoginManager()
+    l.login_as(user)
+    l.resume = False
+    l.run_trigger('on_session_creation')
+
+  return http_response("verified")
+  
 
 
 def get_linked_user(mobile_no):
