@@ -63,7 +63,7 @@ def append_user_info_to_response(user):
     FROM `__Auth`
     WHERE doctype='User' AND name=%(user)s
       AND fieldname='quick_login_pin'
-    """, {"user": "faztp12@gmail.com"})[0][0] > 0
+    """, {"user": user})[0][0] > 0
 
   frappe.local.response = frappe._dict({
       "user": user,
