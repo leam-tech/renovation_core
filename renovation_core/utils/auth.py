@@ -28,11 +28,14 @@ def generate_sms_pin():
 
   # saving the hashed pin, not the pin as is
   hashed_pin = passlibctx.hash(pin)
-  expires_in_sec = 15 * 60
+  expires_in_sec = (cint(frappe.db.get_value(
+      "System Settings", None, "verification_otp_validity")) or 15) * 60
   if user:
-    frappe.cache().set_value(f"sms_user:{user}:{mobile}", hashed_pin, expires_in_sec=expires_in_sec)
+    frappe.cache().set_value(
+        f"sms_user:{user}:{mobile}", hashed_pin, expires_in_sec=expires_in_sec)
   else:
-    frappe.cache().set_value(f"sms:{mobile}", hashed_pin, expires_in_sec=expires_in_sec)
+    frappe.cache().set_value(f"sms:{mobile}",
+                             hashed_pin, expires_in_sec=expires_in_sec)
 
   msg = u"Your verification OTP is: " + pin
   if hash:
@@ -52,7 +55,7 @@ def verify_sms_pin():
 
   if not mobile:
     frappe.throw("No Mobile Number")
-  
+
   def http_response(out):
     update_http_response({"status": out, "mobile": mobile})
 
@@ -63,7 +66,8 @@ def verify_sms_pin():
       return http_response("no_linked_user")
 
   redis_key = f"sms_user:{user}:{mobile}" if login else f"sms:{mobile}"
-  hashed_pin = frappe.safe_decode(frappe.cache().get_value(redis_key, expires=True))
+  hashed_pin = frappe.safe_decode(
+      frappe.cache().get_value(redis_key, expires=True))
 
   if not hashed_pin:
     return http_response("no_pin_for_mobile")
@@ -78,7 +82,6 @@ def verify_sms_pin():
     l.run_trigger('on_session_creation')
 
   return http_response("verified")
-  
 
 
 def get_linked_user(mobile_no):
