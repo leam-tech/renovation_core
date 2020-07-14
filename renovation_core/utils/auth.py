@@ -96,9 +96,12 @@ def get_pin(length=6):
 def pin_login(user, pin, device=None):
   from frappe.sessions import clear_sessions
   login = LoginManager()
+
+  if not frappe.cache().get_value(f'can_use_quick_login_pin', user=user, expires=True):
+    login.fail('Quick Login PIN time expired', user=user)
+
   login.check_if_enabled(user)
-  p = frappe.db.get_value("User", user, "quick_login_pin")
-  if pin != p:
+  if not check_password(user, pin, doctype='User', fieldname='quick_login_pin'):
     login.fail('Incorrect password', user=user)
 
   login.login_as(user)
