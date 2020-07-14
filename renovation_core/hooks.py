@@ -109,8 +109,9 @@ after_install = "renovation_core.install.after_install.after_install"
 # Hook on document methods and events
 
 doc_events = {
-    "user": {
-        "before_save": "renovation_core.doc_events.user.before_save"
+    "User": {
+        "before_save": "renovation_core.doc_events.user.before_save",
+        "on_update": "renovation_core.doc_events.user.on_update"
     },
     "Renovation Script": {
         "on_change": "renovation_core.utils.meta.on_renovation_script_change"
