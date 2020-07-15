@@ -11,17 +11,25 @@ from renovation_core.utils import update_http_response
 from .sms_setting import send_sms
 
 
-def generate_sms_pin():
+@frappe.whitelist(allow_guest=True)
+def generate_otp():
   # we generate new pin on each call, ignoring previous pins
+  medium = frappe.local.form_dict.medium or "sms"
   mobile = frappe.local.form_dict.mobile
+  email = frappe.local.form_dict.email
 
   # If mobile needs to automatically the received
   hash = frappe.local.form_dict.hash
 
-  if not mobile:
-    frappe.throw("No Mobile Number")
+  if medium not in ("sms", "email"):
+    frappe.throw("medium can only be 'sms' or 'email'")
 
-  user = get_linked_user(mobile)
+  if medium == "sms" and not mobile:
+    frappe.throw("No Mobile Number")
+  elif medium == "email" and not email:
+    frappe.throw("No email address")
+
+  user = get_linked_user(mobile_no=mobile, email=email)
 
   # generate a pin
   pin = frappe.safe_decode(str(get_pin()))
@@ -32,40 +40,77 @@ def generate_sms_pin():
       "System Settings", None, "verification_otp_validity")) or 15) * 60
   if user:
     frappe.cache().set_value(
-        f"sms_user:{user}:{mobile}", hashed_pin, expires_in_sec=expires_in_sec)
+        f"{medium}_user:{user}:{mobile if medium=='sms' else email}", hashed_pin, expires_in_sec=expires_in_sec)
   else:
-    frappe.cache().set_value(f"sms:{mobile}",
+    frappe.cache().set_value(f"{medium}:{mobile if medium=='sms' else email}",
                              hashed_pin, expires_in_sec=expires_in_sec)
 
-  msg = u"Your verification OTP is: " + pin
-  if hash:
-    msg = msg + u". " + hash
-  sms = send_sms([mobile], msg, success_msg=False)
-  status = "fail"
-  # Since SMS Settings might remove or add '+' character, we will check against the last 5 digits
-  if sms and isinstance(sms, list) and len(sms) == 1 and mobile[-5:] in sms[0]:
-    status = "success"
-  update_http_response({"status": status, "mobile": mobile})
+  status = "no-op"
+  if medium == "sms":
+    msg = u"Your verification OTP is: " + pin
+    if hash:
+      msg = msg + u". " + hash
+    sms = send_sms([mobile], msg, success_msg=False)
+    status = "fail"
+    # Since SMS Settings might remove or add '+' character, we will check against the last 5 digits
+    if sms and isinstance(sms, list) and len(sms) == 1 and mobile[-5:] in sms[0]:
+      status = "success"
+  elif medium == "email":
+    email_otp_template = frappe.db.get_value(
+        "System Settings", None, "email_otp_template")
+    if not email_otp_template:
+      frappe.throw("Please set Email OTP Template in System Settings")
+    email_otp_template = frappe.get_doc("Email Template", email_otp_template)
+    render_params = frappe._dict(
+        otp=pin,
+        email=email,
+        user=frappe.get_doc("User", user) if user else frappe._dict()
+    )
+    status = "fail"
+    try:
+      frappe.sendmail(
+          recipients=[email],
+          subject=frappe.render_template(
+              email_otp_template.subject, render_params),
+          message=frappe.render_template(
+              email_otp_template.response, render_params)
+      )
+      status = "success"
+    except frappe.OutgoingEmailError:
+      status = "fail"
+
+  update_http_response(
+      {"status": status, medium: mobile if medium == "sms" else email})
 
 
-def verify_sms_pin():
+@frappe.whitelist(allow_guest=True)
+def verify_otp():
+  medium = frappe.local.form_dict.medium or "sms"
   mobile = frappe.local.form_dict.mobile
+  email = frappe.local.form_dict.email
+
+  if medium not in ("sms", "email"):
+    frappe.throw("medium can only be 'sms' or 'email'")
+
+  if medium == "sms" and not mobile:
+    frappe.throw("No Mobile Number")
+  elif medium == "email" and not email:
+    frappe.throw("No email address")
+
   pin = frappe.local.form_dict.pin
   login = cint(frappe.local.form_dict.loginToUser or "0")
 
-  if not mobile:
-    frappe.throw("No Mobile Number")
-
   def http_response(out):
-    update_http_response({"status": out, "mobile": mobile})
+    update_http_response(
+        {"status": out, medium: mobile if medium == "sms" else email})
 
   user = None
   if login:
-    user = get_linked_user(mobile)
+    user = get_linked_user(mobile_no=mobile, email=email)
     if not user:
       return http_response("no_linked_user")
 
-  redis_key = f"sms_user:{user}:{mobile}" if login else f"sms:{mobile}"
+  redis_key = f"{medium}_user:{user}:{mobile if medium=='sms' else email}" if login else f"{medium}:{mobile if medium=='sms' else email}"
   hashed_pin = frappe.safe_decode(
       frappe.cache().get_value(redis_key, expires=True))
 
@@ -84,8 +129,11 @@ def verify_sms_pin():
   return http_response("verified")
 
 
-def get_linked_user(mobile_no):
-  return frappe.db.get_value("User", filters={"mobile_no": mobile_no})
+def get_linked_user(mobile_no, email):
+  if mobile_no:
+    return frappe.db.get_value("User", filters={"mobile_no": mobile_no})
+  elif email:
+    return frappe.db.get_value("User", filters={"email": email})
 
 
 def get_pin(length=6):
