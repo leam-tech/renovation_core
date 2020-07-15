@@ -39,9 +39,9 @@ def generate_sms_pin():
       "System Settings", None, "verification_otp_validity")) or 15) * 60
   if user:
     frappe.cache().set_value(
-        f"{medium}_user:{user}:{mobile}", hashed_pin, expires_in_sec=expires_in_sec)
+        f"{medium}_user:{user}:{mobile if medium=='sms' else email}", hashed_pin, expires_in_sec=expires_in_sec)
   else:
-    frappe.cache().set_value(f"{medium}:{mobile}",
+    frappe.cache().set_value(f"{medium}:{mobile if medium=='sms' else email}",
                              hashed_pin, expires_in_sec=expires_in_sec)
 
   status = "no-op"
@@ -108,7 +108,7 @@ def verify_sms_pin():
     if not user:
       return http_response("no_linked_user")
 
-  redis_key = f"{medium}_user:{user}:{mobile}" if login else f"{medium}:{mobile}"
+  redis_key = f"{medium}_user:{user}:{mobile if medium=='sms' else email}" if login else f"{medium}:{mobile if medium=='sms' else email}"
   hashed_pin = frappe.safe_decode(
       frappe.cache().get_value(redis_key, expires=True))
 
