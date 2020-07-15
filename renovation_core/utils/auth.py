@@ -11,7 +11,8 @@ from renovation_core.utils import update_http_response
 from .sms_setting import send_sms
 
 
-def generate_sms_pin():
+@frappe.whitelist(allow_guest=True)
+def generate_otp():
   # we generate new pin on each call, ignoring previous pins
   medium = frappe.local.form_dict.medium or "sms"
   mobile = frappe.local.form_dict.mobile
@@ -82,7 +83,8 @@ def generate_sms_pin():
       {"status": status, medium: mobile if medium == "sms" else email})
 
 
-def verify_sms_pin():
+@frappe.whitelist(allow_guest=True)
+def verify_otp():
   medium = frappe.local.form_dict.medium or "sms"
   mobile = frappe.local.form_dict.mobile
   email = frappe.local.form_dict.email
