@@ -111,7 +111,10 @@ after_install = "renovation_core.install.after_install.after_install"
 doc_events = {
     "User": {
         "before_save": "renovation_core.doc_events.user.before_save",
-        "on_update": "renovation_core.doc_events.user.on_update"
+        "on_update": "renovation_core.doc_events.user.on_update",
+        "on_change": [
+            "renovation_core.utils.renovation.clear_user_sidebar_cache"
+        ]
     },
     "Renovation Script": {
         "on_change": "renovation_core.utils.meta.on_renovation_script_change"

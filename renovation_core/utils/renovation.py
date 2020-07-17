@@ -12,7 +12,12 @@ def clear_cache():
 
 
 def clear_sidebar_cache(doc, method):
+  frappe.cache().delete_value(REDIS_USER_SIDEBAR)
   frappe.cache().hdel(REDIS_SIDEBAR_TREE, doc.name)
+
+
+def clear_user_sidebar_cache(doc, method):
+  frappe.cache().hdel(REDIS_USER_SIDEBAR, doc.name)
 
 
 @frappe.whitelist()
