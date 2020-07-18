@@ -36,7 +36,7 @@ def generate_otp(id_type, id, medium, medium_id):
   :param id_type: either 'mobile' or 'email'
   :param id: the email/mobile
   :param medium: 'email' or 'sms'
-  :param medium_id: The actual email/sms
+  :param medium_id: The actual email/sms that will receive the OTP
   """
   user = get_user(id_type, id)
   if not user:
@@ -51,8 +51,9 @@ def generate_otp(id_type, id, medium, medium_id):
 
   r = _generate_otp(medium=medium, medium_id=medium_id, purpose="pwd-reset")
   return frappe._dict(
-    sent=1 if r.status == "success" else 0
+      sent=1 if r.status == "success" else 0
   )
+
 
 @frappe.whitelist(allow_guest=True)
 def verify_otp(id_type, id, medium, medium_id, otp):
@@ -61,6 +62,7 @@ def verify_otp(id_type, id, medium, medium_id, otp):
   :param id_type: either 'mobile' or 'email'
   :param id: the email/mobile
   :param medium: 'email' or 'sms'
+  :param medium_id: The actual email/sms that will receive the OTP
   :param otp: The otp to verify
   """
   user = get_user(id_type, id)
@@ -86,8 +88,8 @@ def verify_otp(id_type, id, medium, medium_id, otp):
   user.db_set("reset_password_key", token)
 
   return frappe._dict(
-    verified=1,
-    reset_token=token
+      verified=1,
+      reset_token=token
   )
 
 
@@ -95,8 +97,6 @@ def verify_otp(id_type, id, medium, medium_id, otp):
 def update_password(reset_token, new_password):
   """
   Updates the user password
-  :param id_type: either 'mobile' or 'email'
-  :param id: the email/mobile
   :param reset_token: The token obtained while verifying otp
   :param new_password: The new password to be set for the user
   """
@@ -105,7 +105,7 @@ def update_password(reset_token, new_password):
   user = frappe.db.get_value("User", {"reset_password_key": reset_token})
   if not user:
     return frappe._dict(updated=0, reason="invalid-or-expired-key")
-  
+
   user = frappe.get_doc("User", user)
   user_data = (user.first_name, user.middle_name,
                user.last_name, user.email, user.birth_date)
@@ -114,13 +114,13 @@ def update_password(reset_token, new_password):
 
   if feedback and not feedback.get('password_policy_validation_passed', False):
     return frappe._dict(
-      updated=0, reason="weak-password"
+        updated=0, reason="weak-password"
     )
 
   update_password(user.name, new_password)
   frappe.db.set_value("User", user.name, "reset_password_key", "")
   return frappe._dict(
-    updated=1
+      updated=1
   )
 
 
