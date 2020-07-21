@@ -36,7 +36,7 @@ def generate_otp(id_type, id, medium, medium_id):
   :param id_type: either 'mobile' or 'email'
   :param id: the email/mobile
   :param medium: 'email' or 'sms'
-  :param medium_id: The actual email/sms
+  :param medium_id: The actual email/mobile_no
   """
   user = get_user(id_type, id)
   if not user:
@@ -61,6 +61,7 @@ def verify_otp(id_type, id, medium, medium_id, otp):
   :param id_type: either 'mobile' or 'email'
   :param id: the email/mobile
   :param medium: 'email' or 'sms'
+  :param medium_id: The actual email/mobile_no
   :param otp: The otp to verify
   """
   user = get_user(id_type, id)
@@ -95,8 +96,6 @@ def verify_otp(id_type, id, medium, medium_id, otp):
 def update_password(reset_token, new_password):
   """
   Updates the user password
-  :param id_type: either 'mobile' or 'email'
-  :param id: the email/mobile
   :param reset_token: The token obtained while verifying otp
   :param new_password: The new password to be set for the user
   """
