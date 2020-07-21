@@ -4,7 +4,7 @@ import frappe
 from frappe.handler import uploadfile as uf
 
 from .utils import get_request_method, get_request_path, update_http_response
-from .utils.auth import generate_otp, verify_otp
+from .utils.auth import generate_otp_deprecated, verify_otp_deprecated
 from .utils.doc import doc_handler
 from .utils.report import get_report
 
@@ -26,9 +26,9 @@ def handler():
   elif request_parts[3] == "report":
     get_report()
   elif request_parts[3] == "auth.sms.generate":
-    generate_otp()
+    generate_otp_deprecated()
   elif request_parts[3] == "auth.sms.verify":
-    verify_otp()
+    verify_otp_deprecated()
   elif request_parts[3] == "test":
     print(request_parts[3])
     print("FORM DICT :")
