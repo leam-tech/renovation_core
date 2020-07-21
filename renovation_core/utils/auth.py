@@ -13,7 +13,13 @@ from .sms_setting import send_sms
 
 @frappe.whitelist(allow_guest=True)
 def generate_otp(medium="sms", medium_id=None, sms_hash=None, purpose="login"):
-  # we generate new pin on each call, ignoring previous pins
+  """
+  Generate and Send an OTP through the medium specified. we generate new pin on each call, ignoring previous pins
+  :param medium: 'email' or 'sms'
+  :param medium_id: The actual email/mobile_no
+  :param sms_hash: The hash that should be appended to OTP SMS
+  :param purpose: Specify an optional purpose (login, pwd_reset) to make a custom context
+  """
 
   if medium not in ("sms", "email"):
     frappe.throw("medium can only be 'sms' or 'email'")
@@ -86,7 +92,14 @@ def generate_otp_deprecated():
 
 @frappe.whitelist(allow_guest=True)
 def verify_otp(medium="sms", medium_id=None, otp=None, login_to_user=False, purpose="login"):
-
+  """
+  Verify the OTP against the previously generated OTP.
+  :param medium: 'email' or 'sms'
+  :param medium_id: The actual email/mobile_no
+  :param otp: User input
+  :param login_to_user: Check this flag to login to the associated user
+  :param purpose: If purpose was specified while calling generate_otp, it is mandatory to use the same here
+  """
   if medium not in ("sms", "email"):
     frappe.throw("medium can only be 'sms' or 'email'")
 
@@ -163,6 +176,12 @@ def get_otp(length=6):
 
 @frappe.whitelist(allow_guest=True)
 def pin_login(user, pin, device=None):
+  """
+  Login using the user's email and the quick login pin
+  :param user: The active user
+  :param pin: The quick login pin
+  :param device: Clear all sessions of device
+  """
   from frappe.sessions import clear_sessions
   login = LoginManager()
 
@@ -183,6 +202,13 @@ def pin_login(user, pin, device=None):
 
 @frappe.whitelist(allow_guest=True)
 def get_token(user, pwd, expire_on=None, device=None):
+  """
+  Get the JWT Token
+  :param user: The user in ctx
+  :param pwd: Pwd to auth
+  :param expire_on: yyyy-mm-dd HH:mm:ss to specify the expiry
+  :param device: The device in ctx
+  """
   if not frappe.db.exists("User", user):
     raise frappe.ValidationError(_("Invalide User"))
 
@@ -227,11 +253,19 @@ def make_jwt(user, expire_on=None, secret=None):
 
 @frappe.whitelist()
 def get_jwt_token():
+  """
+  Get jwt token for the active user
+  """
   return make_jwt(user=frappe.session.user)
 
 
 @frappe.whitelist()
 def change_password(old_password, new_password):
+  """
+  Update the password when old password is given
+  :param old_password: The old password of the User
+  :param new_password: The new password to set for the user
+  """
   from frappe.core.doctype.user.user import test_password_strength, handle_password_test_fail
 
   check_password(user=frappe.session.user, pwd=old_password)
