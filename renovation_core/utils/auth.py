@@ -142,7 +142,8 @@ def verify_otp_deprecated():
   pin = frappe.local.form_dict.pin
   login = cint(frappe.local.form_dict.loginToUser or "0")
 
-  r = verify_otp(medium=medium, medium_id=mobile or email, otp=pin, login_to_user=login)
+  r = verify_otp(medium=medium, medium_id=mobile or email,
+                 otp=pin, login_to_user=login)
   # Response Compatibility
   if r.status == "no__for_mobile":
     r.status = "no_pin_for_mobile"
@@ -228,6 +229,18 @@ def get_token(user, pwd, expire_on=None, device=None):
 def make_jwt(user, expire_on=None, secret=None):
   if not frappe.session.get('sid') or frappe.session.sid == "Guest":
     return
+
+  if frappe.session.user == frappe.session.sid:
+    # active via apikeys/bearer tokens, no real session inplace
+    from frappe.sessions import Session
+    user_info = frappe.db.get_value(
+        "User", frappe.session.user,
+        ["user_type", "first_name", "last_name"], as_dict=1)
+    frappe.local.session_obj = Session(
+        user=frappe.session.user, resume=False,
+        full_name=user_info.first_name, user_type=user_info.user_type)
+    frappe.local.session = frappe.local.session_obj.data
+
   if not secret:
     secret = frappe.utils.password.get_encryption_key()
   if expire_on and not isinstance(expire_on, frappe.utils.datetime.datetime):
