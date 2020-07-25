@@ -123,6 +123,8 @@ io.on('connection', async function (socket) {
         if (userDetails && userDetails.allow_guest) {
             socket.send("Joining Guest-User Room");
             socket.join(get_user_room(socket, user))
+        } else {
+            socket.send("Guest Login disabled")
         }
     }
 
