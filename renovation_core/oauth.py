@@ -1,4 +1,3 @@
-import base64
 import json
 
 import frappe
@@ -15,22 +14,18 @@ def get_oauth_url(provider: str, redirect_to: str) -> str:
 
 
 @frappe.whitelist(allow_guest=True)
-def login_via_google(code, state=None):
-  return login_via_oauth2('google', code=code, state=state, decoder=decoder_compat)
+def login_via_google(code, state=None, login=True):
+  return login_via_oauth2('google', code=code, state=state, decoder=decoder_compat, login=login)
 
 
-def login_via_oauth2(provider, code, state, decoder=None):
+def login_via_oauth2(provider, code, state, decoder=None, login=True):
   info = get_info_via_oauth(provider, code, decoder)
-  return login_oauth_user(info, provider=provider, state=state)
+  return login_oauth_user(info, provider=provider, state=state, login=login)
 
 
-def login_oauth_user(data=None, provider=None, state=None):
+def login_oauth_user(data=None, provider=None, state=None, login=True):
   if isinstance(data, string_types):
     data = json.loads(data)
-
-  if isinstance(state, string_types):
-    state = base64.b64decode(state)
-    state = json.loads(state.decode("utf-8"))
 
   user = get_email(data)
 
@@ -44,15 +39,16 @@ def login_oauth_user(data=None, provider=None, state=None):
   except SignupDisabledError:
     return frappe.throw("Signup is Disabled", "Sorry. Signup from Website is disabled.")
 
-  frappe.local.login_manager.user = user
-  frappe.local.login_manager.post_login()
+  if login:
+    # TODO: Login with JWT optionally
+    frappe.local.login_manager.user = user
+    frappe.local.login_manager.post_login()
 
   # because of a GET request!
   frappe.db.commit()
 
-  if state:
-    redirect_to = state.get("redirect_to", None)
-    redirect_post_login(desk_user=frappe.local.response.get('message') == 'Logged In', redirect_to=redirect_to)
+  if not login:
+    return frappe.get_doc("User", user)
 
 
 def redirect_post_login(desk_user, redirect_to=None):
