@@ -12,7 +12,7 @@ from .utils.notification import send_notification
 from .utils.sms_setting import validate_receiver_nos
 from .utils.sync import _get_doc_files, process
 
-__version__ = '1.1.6'
+__version__ = '1.1.8'
 
 Meta.process = process
 frappe.model.sync.get_doc_files = _get_doc_files
@@ -36,6 +36,12 @@ def clear_cache():
 def on_login(login_manager):
   import frappe.permissions
 
+  frappe.cache().set_value(
+      f'can_use_quick_login_pin', user=frappe.session.user, val=1,
+      expires_in_sec=(cint(frappe.db.get_value(
+          "System Settings", None, "quick_login_window")) or 6) * 60 * 60
+  )
+
   append_user_info_to_response(login_manager.user)
 
 
@@ -49,14 +55,23 @@ def on_session_creation(login_manager):
 
 def append_user_info_to_response(user):
   user_details = frappe.db.get_value(
-      "User", user, ["name", "full_name", "quick_login_pin", "user_image", "language"])
+      "User", user, ["name", "full_name", "user_image", "language"])
+
+  has_quick_login_pin = frappe.db.sql("""
+    SELECT
+      COUNT(*)
+    FROM `__Auth`
+    WHERE doctype='User' AND name=%(user)s
+      AND fieldname='quick_login_pin'
+    """, {"user": user})[0][0] > 0
+
   frappe.local.response = frappe._dict({
       "user": user,
       "message": "Logged In",
       "home_page": "/desk",
-      "user_image": user_details[3],
+      "user_image": user_details[2],
       "full_name": user_details[1],
-      "has_quick_login_pin": user_details[2] != None,
+      "has_quick_login_pin": has_quick_login_pin,
       "lang": user_details[-1]
   })
 
