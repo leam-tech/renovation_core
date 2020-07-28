@@ -14,7 +14,8 @@ def get_oauth_url(provider: str, redirect_to: str) -> str:
 
 
 @frappe.whitelist(allow_guest=True)
-def login_via_google(code, state=None, login=True):
+def login_via_google(code, state=None, login=True, use_jwt=False):
+  frappe.form_dict['use_jwt'] = use_jwt
   return login_via_oauth2('google', code=code, state=state, decoder=decoder_compat, login=login)
 
 
@@ -40,9 +41,11 @@ def login_oauth_user(data=None, provider=None, state=None, login=True):
     return frappe.throw("Signup is Disabled", "Sorry. Signup from Website is disabled.")
 
   if login:
-    # TODO: Login with JWT optionally
     frappe.local.login_manager.user = user
     frappe.local.login_manager.post_login()
+    if frappe.form_dict['use_jwt']:
+      from renovation_core import on_session_creation
+      on_session_creation(frappe.local.login_manager)
 
   # because of a GET request!
   frappe.db.commit()
