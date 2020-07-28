@@ -19,6 +19,19 @@ def login_via_google(code, state=None, login=True, use_jwt=False):
   return login_via_oauth2('google', code=code, state=state, decoder=decoder_compat, login=login)
 
 
+def get_info_via_google(code):
+  """
+  # Sometimes we only need the id without logging in or creating a user.
+  This function will return the details of google response (email, id, name, etc...)
+  :param code: The auth code from Google's Auth server
+  :return:
+  """
+  data = get_info_via_oauth("google", code, decoder=decoder_compat)
+  if isinstance(data, string_types):
+    data = json.loads(data)
+  return data
+
+
 def login_via_oauth2(provider, code, state, decoder=None, login=True):
   info = get_info_via_oauth(provider, code, decoder)
   return login_oauth_user(info, provider=provider, state=state, login=login)
