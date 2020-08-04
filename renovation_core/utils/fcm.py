@@ -101,7 +101,7 @@ def _add_user_token(user, token, linked_sid=None):
       token=token,
       linked_sid=linked_sid
   ))
-  d.insert()
+  d.insert(ignore_permissions=True)
   return d
 
 
