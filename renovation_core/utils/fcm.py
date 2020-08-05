@@ -5,7 +5,7 @@ import frappe
 from firebase_admin import credentials
 from firebase_admin import messaging
 from frappe.model.naming import make_autoname
-from frappe.utils import cint
+from frappe.utils import cint, now
 from six import string_types
 
 """
@@ -93,13 +93,15 @@ def _add_user_token(user, token, linked_sid=None):
   _existing = frappe.db.get_value(
       "FCM User Token", {"token": token, "user": user})
   if _existing:
+    frappe.db.set_value("FCM User Token", _existing, "last_updated", now())
     return frappe.get_doc("FCM User Token", _existing)
 
   d = frappe.get_doc(frappe._dict(
       doctype="FCM User Token",
       user=user,
       token=token,
-      linked_sid=linked_sid
+      linked_sid=linked_sid,
+      last_updated=now()
   ))
   d.insert(ignore_permissions=True)
   return d
