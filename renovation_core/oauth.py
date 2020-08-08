@@ -3,8 +3,8 @@ import json
 import frappe
 from frappe import _
 from frappe.integrations.oauth2_logins import decoder_compat
-from frappe.utils.oauth import get_oauth2_authorize_url, get_email, update_oauth_user, SignupDisabledError, \
-  get_info_via_oauth
+from frappe.utils.oauth import get_info_via_oauth, get_oauth2_authorize_url, get_email, SignupDisabledError, \
+  update_oauth_user
 from six import string_types
 
 
@@ -22,7 +22,7 @@ def login_via_google(code, state=None, login=True, use_jwt=False):
 @frappe.whitelist(allow_guest=True)
 def login_via_apple(code, state=None, login=True, use_jwt=False):
   frappe.form_dict['use_jwt'] = use_jwt
-  return login_via_oauth2('apple', code=code, state=state, login=login, decoder=decoder_compat, id_token=True)
+  return login_via_oauth2_id_token('apple', code=code, state=state, login=login, decoder=decoder_compat)
 
 
 def get_info_via_google(code):
@@ -38,8 +38,13 @@ def get_info_via_google(code):
   return data
 
 
-def login_via_oauth2(provider, code, state, decoder=None, login=True, id_token=None):
-  info = get_info_via_oauth(provider, code, decoder, id_token=id_token)
+def login_via_oauth2(provider, code, state, decoder=None, login=True):
+  info = get_info_via_oauth(provider, code, decoder)
+  return login_oauth_user(info, provider=provider, state=state, login=login)
+
+
+def login_via_oauth2_id_token(provider, code, state, decoder=None, login=True):
+  info = get_info_via_oauth(provider, code, decoder, id_token=True)
   return login_oauth_user(info, provider=provider, state=state, login=login)
 
 
