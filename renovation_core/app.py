@@ -15,6 +15,7 @@ from werkzeug.wrappers import Request, Response
 
 from .auth import RenovationHTTPRequest
 from .utils.logging import log_request
+import renovation_core.cmd_api_handler
 
 
 @Request.application
@@ -33,10 +34,10 @@ def application(request):
           "Location": "https://{}{}".format(frappe.request.host, frappe.request.path)})
 
     elif frappe.local.form_dict.cmd:
-      response = frappe.handler.handle()
+      response = renovation_core.cmd_api_handler.handle()
 
     elif frappe.request.path.startswith("/api/"):
-      response = frappe.api.handle()
+      response = renovation_core.cmd_api_handler.api_handele()
 
     elif frappe.request.path.startswith('/backups'):
       response = frappe.utils.response.download_backup(request.path)
