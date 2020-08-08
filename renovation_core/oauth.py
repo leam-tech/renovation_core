@@ -19,6 +19,12 @@ def login_via_google(code, state=None, login=True, use_jwt=False):
   return login_via_oauth2('google', code=code, state=state, decoder=decoder_compat, login=login)
 
 
+@frappe.whitelist(allow_guest=True)
+def login_via_apple(code, state=None, login=True, use_jwt=False):
+  frappe.form_dict['use_jwt'] = use_jwt
+  return login_via_oauth2('apple', code=code, state=state, login=login, decoder=decoder_compat, id_token=True)
+
+
 def get_info_via_google(code):
   """
   # Sometimes we only need the id without logging in or creating a user.
@@ -32,8 +38,8 @@ def get_info_via_google(code):
   return data
 
 
-def login_via_oauth2(provider, code, state, decoder=None, login=True):
-  info = get_info_via_oauth(provider, code, decoder)
+def login_via_oauth2(provider, code, state, decoder=None, login=True, id_token=None):
+  info = get_info_via_oauth(provider, code, decoder, id_token=id_token)
   return login_oauth_user(info, provider=provider, state=state, login=login)
 
 
