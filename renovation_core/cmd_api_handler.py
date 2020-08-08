@@ -6,6 +6,7 @@ from frappe.handler import execute_cmd
 from frappe import _
 from frappe.api import get_request_form_data
 from frappe.api import validate_oauth, validate_auth_via_api_keys
+import renovation_core
 
 
 def validate_auth_overwtire():
@@ -90,7 +91,7 @@ def api_handele():
 
 	if call=="method":
 		frappe.local.form_dict.cmd = doctype
-		return frappe.handler.handle()
+		return renovation_core.cmd_api_handler.handle()
 
 	elif call=="resource":
 		if "run_method" in frappe.local.form_dict:
