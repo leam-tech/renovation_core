@@ -57,6 +57,31 @@ def get_info_via_google(code):
   return data
 
 
+@frappe.whitelist(allow_guest=True)
+def get_info_via_apple(code, option=None):
+  """
+  # Sometimes we only need the id without logging in or creating a user.
+  This function will return the details of google response (email, id, name, etc...)
+  :param code: The auth code from Apple's Auth server
+  :param option: The platform (native | web | android)
+  :return:
+  """
+
+  redirect_url = None
+  if option == 'web':
+    keys = frappe.conf.get('apple_login_web')
+    redirect_url = keys.get('web_url')
+  elif option == 'android':
+    keys = frappe.conf.get('apple_login_android')
+    redirect_url = keys.get('android_url')
+
+  data = get_info_via_oauth("apple", code, decoder=decoder_compat, id_token=True, option=option,
+                            redirect_url=redirect_url)
+  if isinstance(data, string_types):
+    data = json.loads(data)
+  return data
+
+
 def login_via_oauth2(provider, code, state, decoder=None, login=True):
   info = get_info_via_oauth(provider, code, decoder)
   return login_oauth_user(info, provider=provider, state=state, login=login)
