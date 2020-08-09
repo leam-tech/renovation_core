@@ -112,7 +112,7 @@ def _delete_user_token(user, token):
   if not t:
     return
 
-  frappe.delete_doc("FCM User Token", t)
+  frappe.delete_doc("FCM User Token", t, ignore_permissions=True)
 
 
 def notify_via_fcm(title, body, data=None, roles=None, users=None, topics=None, tokens=None):
@@ -290,7 +290,7 @@ def delete_invalid_tokens(tokens, responses):
   for t in err_tokens:
     t = frappe.db.get_value("FCM User Token", {"token": t})
     if t:
-      frappe.delete_doc("FCM User Token", t)
+      frappe.delete_doc("FCM User Token", t, ignore_permissions=True)
 
 
 def fcm_error_handler(tokens=None, topic=None, title=None, body=None, data=None, responses=[], recipient_count=1, success_count=0):
