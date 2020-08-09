@@ -82,7 +82,7 @@ def get_client_tokens(user=None):
   tokens = []
   for t in frappe.get_all("FCM User Token", fields=["name", "token", "linked_sid"], filters={"user": user}):
     if t.linked_sid and not is_valid_session_id(t.linked_sid):
-      frappe.delete_doc("FCM User Token", t.name)
+      frappe.delete_doc("FCM User Token", t.name, ignore_permissions=True)
       continue
     tokens.append(t.token)
 
