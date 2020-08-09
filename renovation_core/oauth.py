@@ -24,7 +24,24 @@ def login_via_google(code, state=None, login=True, use_jwt=False):
 @frappe.whitelist(allow_guest=True)
 def login_via_apple(code, state=None, login=True, use_jwt=False, option='native'):
   frappe.form_dict['use_jwt'] = use_jwt
-  return login_via_oauth2_id_token('apple', code=code, state=state, login=login, decoder=decoder_compat, option=option)
+  redirect_url = None
+  if option == 'web':
+    keys = frappe.conf.get('apple_login_web')
+    redirect_url = keys.get('web_url')
+  elif option == 'android':
+    keys = frappe.conf.get('apple_login_android')
+    redirect_url = keys.get('android_url')
+  return login_via_oauth2_id_token('apple', code=code, state=state, login=login, decoder=decoder_compat,
+                                   option=option, redirect_url=redirect_url)
+
+
+@frappe.whitelist(allow_guest=True)
+def redirect_apple_login_to_android(**kwargs):
+  from urllib.parse import urlencode
+  frappe.local.response["type"] = "redirect"
+  frappe.local.response[
+    "location"] = 'intent://callback?{args}/#Intent;package={android_package};scheme=signinwithapple;end'.format(
+      args=urlencode(kwargs), android_package=frappe.conf.get('apple_login_android').get('android_package_id'))
 
 
 def get_info_via_google(code):
@@ -45,8 +62,8 @@ def login_via_oauth2(provider, code, state, decoder=None, login=True):
   return login_oauth_user(info, provider=provider, state=state, login=login)
 
 
-def login_via_oauth2_id_token(provider, code, state, decoder=None, login=True, option=None):
-  info = get_info_via_oauth(provider, code, decoder, id_token=True, option=option)
+def login_via_oauth2_id_token(provider, code, state, decoder=None, login=True, option=None, redirect_url=None):
+  info = get_info_via_oauth(provider, code, decoder, id_token=True, option=option, redirect_url=redirect_url)
   return login_oauth_user(info, provider=provider, state=state, login=login)
 
 
@@ -133,14 +150,14 @@ def get_oauth_keys(provider, option=None):
     }
 
 
-def get_info_via_oauth(provider, code, decoder=None, id_token=False, option=None):
+def get_info_via_oauth(provider, code, decoder=None, id_token=False, option=None, redirect_url=None):
   flow = get_oauth2_flow(provider, option=option)
   oauth2_providers = get_oauth2_providers()
 
   args = {
       "data": {
           "code": code,
-          "redirect_uri": get_redirect_uri(provider),
+          "redirect_uri": get_redirect_uri(provider) if redirect_url is None else redirect_url,
           "grant_type": "authorization_code"
       }
   }
