@@ -4,8 +4,8 @@ import frappe
 import jwt
 from frappe import _
 from frappe.integrations.oauth2_logins import decoder_compat
-from frappe.utils.oauth import get_oauth2_authorize_url, get_email, update_oauth_user, SignupDisabledError, \
-  get_oauth2_providers, get_redirect_uri
+from frappe.utils.oauth import get_oauth2_authorize_url, get_email, SignupDisabledError, get_oauth2_providers, \
+  get_redirect_uri, get_first_name, get_last_name
 from frappe.utils.password import get_decrypted_password
 from six import string_types
 
@@ -60,7 +60,7 @@ def get_info_via_google(code):
 def get_info_via_apple(code, option=None):
   """
   # Sometimes we only need the id without logging in or creating a user.
-  This function will return the details of google response (email, id, name, etc...)
+  This function will return the details of Apple's response (email, id, name, etc...)
   :param code: The auth code from Apple's Auth server
   :param option: The platform (native | web | android)
   :return:
@@ -101,14 +101,13 @@ def login_oauth_user(data=None, provider=None, state=None, login=True):
     frappe.throw(_("Please ensure that your profile has an email address"))
 
   try:
-    if update_oauth_user(user, data, provider) is False:
-      return
+    user = update_oauth_user(user, data, provider)
 
   except SignupDisabledError:
     return frappe.throw("Signup is Disabled", "Sorry. Signup from Website is disabled.")
 
   if login:
-    frappe.local.login_manager.user = user
+    frappe.local.login_manager.user = user.name
     frappe.local.login_manager.post_login()
     if frappe.form_dict['use_jwt']:
       from renovation_core import on_session_creation
@@ -118,7 +117,7 @@ def login_oauth_user(data=None, provider=None, state=None, login=True):
   frappe.db.commit()
 
   if not login:
-    return frappe.get_doc("User", user)
+    return user
 
 
 def redirect_post_login(desk_user, redirect_to=None):
@@ -206,3 +205,100 @@ def get_info_via_oauth(provider, code, decoder=None, id_token=False, option=None
     frappe.throw(_("Email not verified with {0}").format(provider.title()))
 
   return info
+
+
+def update_oauth_user(user, data, provider):
+  if isinstance(data.get("location"), dict):
+    data["location"] = data.get("location").get("name")
+
+  save = False
+
+  if not frappe.db.exists("User", user) and not frappe.db.exists("User", {"username": user}) and not frappe.db.exists(
+      "User", {"email": user}):
+
+    # is signup disabled?
+    if frappe.utils.cint(frappe.db.get_single_value("Website Settings", "disable_signup")):
+      raise SignupDisabledError
+
+    save = True
+    user = frappe.new_doc("User")
+    user.update({
+        "doctype": "User",
+        "first_name": get_first_name(data) or get_email(data),
+        "last_name": get_last_name(data),
+        "email": get_email(data),
+        "gender": (data.get("gender") or "").title(),
+        "enabled": 1,
+        "new_password": frappe.generate_hash(get_email(data)),
+        "location": data.get("location"),
+        "user_type": "Website User",
+        "user_image": data.get("picture") or data.get("avatar_url")
+    })
+
+  else:
+    _user = None
+    if frappe.db.exists("User", user):
+      _user = frappe.get_doc("User", user)
+    if not _user:
+      users = frappe.get_all("User", filters={"username": user})
+      if len(users):
+        _user = frappe.get_doc("User", users[0].get('name'))
+    if not _user:
+      users = frappe.get_all("User", filters={"email": user})
+      if len(users):
+        _user = frappe.get_doc("User", users[0].get('name'))
+
+    user = _user
+    if not user.enabled:
+      frappe.respond_as_web_page(_('Not Allowed'), _(
+          'User {0} is disabled').format(user.email))
+      return False
+
+  if provider == "facebook" and not user.get_social_login_userid(provider):
+    save = True
+    user.set_social_login_userid(
+        provider, userid=data["id"], username=data.get("username"))
+    user.update({
+        "user_image": "https://graph.facebook.com/{id}/picture".format(id=data["id"])
+    })
+
+  elif provider == "google" and not user.get_social_login_userid(provider):
+    save = True
+    user.set_social_login_userid(provider, userid=data["id"])
+
+  elif provider == "github" and not user.get_social_login_userid(provider):
+    save = True
+    user.set_social_login_userid(
+        provider, userid=data["id"], username=data.get("login"))
+
+  elif provider == "frappe" and not user.get_social_login_userid(provider):
+    save = True
+    user.set_social_login_userid(provider, userid=data["sub"])
+
+  elif provider == "office_365" and not user.get_social_login_userid(provider):
+    save = True
+    user.set_social_login_userid(provider, userid=data["sub"])
+
+  elif provider == "salesforce" and not user.get_social_login_userid(provider):
+    save = True
+    user.set_social_login_userid(
+        provider, userid="/".join(data["sub"].split("/")[-2:]))
+
+  elif not user.get_social_login_userid(provider):
+    save = True
+    user_id_property = frappe.db.get_value(
+        "Social Login Key", provider, "user_id_property") or "sub"
+    user.set_social_login_userid(provider, userid=data[user_id_property])
+
+  if save:
+    user.flags.ignore_permissions = True
+    user.flags.no_welcome_mail = True
+
+    # set default signup role as per Portal Settings
+    default_role = frappe.db.get_single_value(
+        "Portal Settings", "default_role")
+    if default_role:
+      user.add_roles(default_role)
+
+    user.save()
+  return user
