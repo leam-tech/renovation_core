@@ -139,23 +139,23 @@ scheduler_events = {
     ]
 }
 
-# scheduler_events = {
-# 	"all": [
-# 		"renovation_core.tasks.all"
-# 	],
-# 	"daily": [
-# 		"renovation_core.tasks.daily"
-# 	],
-# 	"hourly": [
-# 		"renovation_core.tasks.hourly"
-# 	],
-# 	"weekly": [
-# 		"renovation_core.tasks.weekly"
-# 	]
-# 	"monthly": [
-# 		"renovation_core.tasks.monthly"
-# 	]
-# }
+scheduler_events = {
+    # 	"all": [
+    # 		"renovation_core.tasks.all"
+    # 	],
+    # 	"daily": [
+    # 		"renovation_core.tasks.daily"
+    # 	],
+    # 	"hourly": [
+    # 		"renovation_core.tasks.hourly"
+    # 	],
+    # 	"weekly": [
+    # 		"renovation_core.tasks.weekly"
+    # 	]
+    "monthly": [
+        "renovation_core.tasks.monthly"
+    ]
+}
 
 # Testing
 # -------
