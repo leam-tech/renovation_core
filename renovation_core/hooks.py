@@ -153,7 +153,7 @@ scheduler_events = {
     # 		"renovation_core.tasks.weekly"
     # 	]
     "monthly": [
-        "renovation_core.tasks.monthly"
+        "renovation_core.tasks.generate_apple_client_secret"
     ]
 }
 
