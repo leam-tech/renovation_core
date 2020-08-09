@@ -57,7 +57,6 @@ def get_info_via_google(code):
   return data
 
 
-@frappe.whitelist(allow_guest=True)
 def get_info_via_apple(code, option=None):
   """
   # Sometimes we only need the id without logging in or creating a user.
