@@ -116,7 +116,8 @@ def update_password(reset_token, new_password):
       updated=0, reason="weak-password"
     )
 
-  update_password(user.name, new_password)
+  from frappe.utils.password import update_password as _update_password
+  _update_password(user.name, new_password)
   frappe.db.set_value("User", user.name, "reset_password_key", "")
   return frappe._dict(
     updated=1
