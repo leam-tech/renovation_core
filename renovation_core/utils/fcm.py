@@ -5,7 +5,7 @@ import frappe
 from firebase_admin import credentials
 from firebase_admin import messaging
 from frappe.model.naming import make_autoname
-from frappe.utils import cint
+from frappe.utils import cint, now
 from six import string_types
 
 """
@@ -18,7 +18,6 @@ Each FCM will call register_client on start, which will be stored in frappe.defa
 There is no expiry date for the tokens now
 """
 
-fcm_defaults_key = "fcm_reg_tokens"
 firebase_app = None
 
 
@@ -45,24 +44,75 @@ def register_client(token, user=None):
   if len(token) < 10:
     frappe.throw("Invalid token")
 
-  tokens = get_client_tokens(user)
-  if token not in tokens:
-    tokens.append(token)
-    set_client_tokens(user, tokens)
+  linked_sid = None
+  # If current user is logged in with a normal frappe session that is valid,
+  # Link the token to the sid
+  if is_valid_session_id(frappe.session.sid):
+    linked_sid = frappe.session.sid
 
+  _add_user_token(user=user, token=token, linked_sid=linked_sid)
   return "OK"
 
 
+def is_valid_session_id(sid):
+  """
+  Verifies if the sid is still a valid sid
+  """
+  from frappe.sessions import get_expiry_period_for_query
+  device = frappe.db.sql(
+      'SELECT `device` FROM `tabSessions` WHERE `sid`=%s', sid)
+  device = device and device[0][0] or 'desktop'
+
+  rec = frappe.db.sql("""
+    SELECT `user`, `sessiondata`
+    FROM `tabSessions` WHERE `sid`=%s AND
+    (NOW() - lastupdate) < %s
+    """, (sid, get_expiry_period_for_query(device)))
+
+  return True if len(rec) else False
+
+
 def get_client_tokens(user=None):
+  """
+  Returns a list of valid user fcm tokens
+  """
   if not user:
     user = frappe.session.user if frappe.session else "Guest"
-  return json.loads(frappe.defaults.get_user_default(fcm_defaults_key, user) or "[]")
+
+  tokens = []
+  for t in frappe.get_all("FCM User Token", fields=["name", "token", "linked_sid"], filters={"user": user}):
+    if t.linked_sid and not is_valid_session_id(t.linked_sid):
+      frappe.delete_doc("FCM User Token", t.name, ignore_permissions=True)
+      continue
+    tokens.append(t.token)
+
+  return tokens
 
 
-def set_client_tokens(user=None, tokens=[]):
-  if not user:
-    user = frappe.session.user if frappe.session else "Guest"
-  frappe.defaults.set_user_default(fcm_defaults_key, json.dumps(tokens), user)
+def _add_user_token(user, token, linked_sid=None):
+  _existing = frappe.db.get_value(
+      "FCM User Token", {"token": token, "user": user})
+  if _existing:
+    frappe.db.set_value("FCM User Token", _existing, "last_updated", now())
+    return frappe.get_doc("FCM User Token", _existing)
+
+  d = frappe.get_doc(frappe._dict(
+      doctype="FCM User Token",
+      user=user,
+      token=token,
+      linked_sid=linked_sid,
+      last_updated=now()
+  ))
+  d.insert(ignore_permissions=True)
+  return d
+
+
+def _delete_user_token(user, token):
+  t = frappe.db.get_value("FCM User Token", {"token": token, "user": user})
+  if not t:
+    return
+
+  frappe.delete_doc("FCM User Token", t, ignore_permissions=True)
 
 
 def notify_via_fcm(title, body, data=None, roles=None, users=None, topics=None, tokens=None):
@@ -147,26 +197,18 @@ def make_communication_doc(message_id, title, body, data, user=None, topic=None)
 
 
 def get_tokens_for(target, roles=None, users=None):
-  filters = {
-      "defKey": fcm_defaults_key
-  }
   if target == "Roles":
     users = [x.parent for x in frappe.db.get_all(
         "Has Role", fields=["distinct parent"], filters={"role": ["IN", roles or []]})]
     target = "Users"
 
-  if target == "Users":
-    filters["parent"] = ["IN", users or []]
+  if target != "Users":
+    frappe.throw("Invalid Target")
 
   tokens = []
-  for token_json in frappe.db.get_all("DefaultValue", fields=["parent", "defValue"], filters=filters):
-    try:
-      user_tokens = json.loads(token_json.defValue or "[]")
-      for t in user_tokens:
-        frappe.cache().set_value("fcm_{}".format(t), token_json.parent, expires_in_sec=20)
-      tokens.extend(user_tokens)
-    except:
-      pass
+  for u in users:
+    tokens.extend(get_client_tokens(user=u))
+
   return [x for x in tokens if len(x) > 0]
 
 
@@ -246,24 +288,9 @@ def delete_invalid_tokens(tokens, responses):
   # now all tokens in err tokens are problematic
   user_token = frappe._dict()
   for t in err_tokens:
-    # we had 10 second buffer in redis while retrieving the tokens
-    user = frappe.cache().get_value("fcm_{}".format(t))
-    if not user:
-      continue
-
-    ts = user_token.setdefault(user, set())
-    ts.add(t)
-
-  for user in list(user_token.keys()):
-    t = set(get_client_tokens(user) or [])
-    new_tokens = list(t - user_token.get(user))
-    print("Updated tokens: {}".format(", ".join(new_tokens)))
-    set_client_tokens(user=user, tokens=new_tokens)
-    frappe.log_error(
-        title="Deleting FCM tokens for {}".format(user),
-        message="The following tokens have been deleted: \n{}".format(
-            "\n".join(list(user_token.get(user))))
-    )
+    t = frappe.db.get_value("FCM User Token", {"token": t})
+    if t:
+      frappe.delete_doc("FCM User Token", t, ignore_permissions=True)
 
 
 def fcm_error_handler(tokens=None, topic=None, title=None, body=None, data=None, responses=[], recipient_count=1, success_count=0):
@@ -329,7 +356,8 @@ def mark_all_as_disable(_user=None, filters=None):
   })
   names = frappe.get_all('Communication', _filters)
   if names:
-    frappe.db.set_value('Communication', {'name': ('in', [x.name for x in names])}, 'disable', 1, update_modified=False)
+    frappe.db.set_value('Communication', {'name': (
+        'in', [x.name for x in names])}, 'disable', 1, update_modified=False)
   return 'Success'
 
 
@@ -340,7 +368,8 @@ def mark_notification_disable(message_id):
 
 @frappe.whitelist()
 def toggle_notification_disable(message_id, disable=1):
-  frappe.db.set_value('Communication', {"message_id": message_id}, 'disable', disable, update_modified=False)
+  frappe.db.set_value('Communication', {
+                      "message_id": message_id}, 'disable', disable, update_modified=False)
   return 'Success'
 
 
@@ -357,7 +386,8 @@ def mark_all_as_read(_user=None, filters=None):
   })
   names = frappe.get_all('Communication', _filters)
   if names:
-    frappe.db.set_value('Communication', {'name': ('in', [x.name for x in names])}, 'seen', 1, update_modified=False)
+    frappe.db.set_value('Communication', {'name': (
+        'in', [x.name for x in names])}, 'seen', 1, update_modified=False)
   return 'Success'
 
 
@@ -379,9 +409,4 @@ def delete_token_on_logout():
     return
 
   token = frappe.local.form_dict.fcm_token
-  tokens = get_client_tokens()
-  if not token in tokens:
-    return
-
-  tokens.remove(token)
-  set_client_tokens(tokens=tokens)
+  _delete_user_token(user=frappe.session.user, token=token)
