@@ -149,7 +149,7 @@ def verify_otp_deprecated():
     r.status = "no_pin_for_mobile"
   elif r.status == "invalid_otp":
     r.status = "invalid_pin"
-  update_http_response()
+  update_http_response(r)
 
 
 def get_otp_redis_key(medium, medium_id, purpose):
