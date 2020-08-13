@@ -55,7 +55,10 @@ def get_info_via_google(code):
   :param code: The auth code from Google's Auth server
   :return:
   """
-  data = get_info_via_oauth("google", code, decoder=decoder_compat)
+
+  redirect_url = frappe.conf.get('google_redirect_url', None)
+
+  data = get_info_via_oauth("google", code, decoder=decoder_compat, redirect_url=redirect_url)
   if isinstance(data, string_types):
     data = json.loads(data)
   return data
