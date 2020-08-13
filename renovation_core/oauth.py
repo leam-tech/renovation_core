@@ -18,7 +18,11 @@ def get_oauth_url(provider: str, redirect_to: str) -> str:
 @frappe.whitelist(allow_guest=True)
 def login_via_google(code, state=None, login=True, use_jwt=False):
   frappe.form_dict['use_jwt'] = use_jwt
-  return login_via_oauth2('google', code=code, state=state, decoder=decoder_compat, login=login)
+  # In case the redirect should be to the frontend project, for instance.
+  redirect_url = frappe.conf.get('google_redirect_url', None)
+
+  return login_via_oauth2('google', code=code, state=state, decoder=decoder_compat, login=login,
+                          redirect_url=redirect_url)
 
 
 @frappe.whitelist(allow_guest=True)
@@ -81,8 +85,8 @@ def get_info_via_apple(code, option=None):
   return data
 
 
-def login_via_oauth2(provider, code, state, decoder=None, login=True):
-  info = get_info_via_oauth(provider, code, decoder)
+def login_via_oauth2(provider, code, state, decoder=None, login=True, redirect_url=None):
+  info = get_info_via_oauth(provider, code, decoder, redirect_url=redirect_url)
   return login_oauth_user(info, provider=provider, state=state, login=login)
 
 
