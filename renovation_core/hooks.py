@@ -34,6 +34,10 @@ fixtures = [
     {
         "dt": "Email Template",
         "filters": [["name", "IN", ["Default Email OTP Template"]]]
+    },
+    {
+        "dt": "SMS Template",
+        "filters": [["name", "IN", ["Default SMS OTP Template"]]]
     }
 ]
 

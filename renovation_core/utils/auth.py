@@ -47,15 +47,18 @@ def generate_otp(medium="sms", medium_id=None, sms_hash=None, purpose="login"):
 
   status = "success"
   if medium == "sms":
-    msg_template = frappe.db.get_value(
+    sms_otp_template = frappe.db.get_value(
       "System Settings", None, "sms_otp_template")
+    if not sms_otp_template:
+      frappe.throw("Please set SMS OTP Template in System Settings")
+    sms_otp_template = frappe.get_doc("SMS Template", sms_otp_template)
     render_params = frappe._dict(
         otp=otp,
         mobile_no=medium_id,
         user=frappe.get_doc("User", user) if user else frappe._dict()
     )
     msg = frappe.render_template(
-            msg_template, render_params)
+            sms_otp_template.template, render_params)
     if sms_hash:
       msg = msg + u"\n" + sms_hash
     sms = send_sms([medium_id], msg, success_msg=False)

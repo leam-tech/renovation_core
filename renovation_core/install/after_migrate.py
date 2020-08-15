@@ -10,5 +10,7 @@ def set_default_otp_template():
       frappe.db.set_value("System Settings", None, "email_otp_template", "Default Email OTP Template")
 
   if not frappe.db.get_value("System Settings", None, "sms_otp_template"):
-    frappe.db.set_value("System Settings", None, "sms_otp_template", "{{ _(\"Your verification OTP is:\") }} {{ otp }}")
+    if frappe.db.exists("SMS Template", "Default SMS OTP Template"):
+      # should exists via fixtures
+      frappe.db.set_value("System Settings", None, "sms_otp_template", "Default SMS OTP Template")
     

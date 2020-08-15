@@ -1,0 +1,13 @@
+[
+ {
+  "docstatus": 0,
+  "doctype": "SMS Template",
+  "modified": "2020-08-15 16:47:49.040798",
+  "name": "Default SMS OTP Template",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "template": "{{ _('Your verification OTP is:') }} {{ otp }}",
+  "title": "Default SMS OTP Template"
+ }
+]
