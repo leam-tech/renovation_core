@@ -6,6 +6,7 @@ from frappe.model.db_query import DatabaseQuery
 from six import string_types
 from frappe import _
 import copy
+from frappe.model import table_fields
 
 
 class UpdatedDBQuery(DatabaseQuery):
@@ -108,16 +109,29 @@ def get_list(doctype, *args, **kwargs):
 
 
 def update_transalte(doctype, data):
-  if not isinstance(data, list):
+  if frappe.local.lang == 'en' or not isinstance(data, (dict, list)):
     return data
-  translateable_fields = frappe.get_meta(doctype).get_translatable_fields()
-  for d in data:
-    if not isinstance(d, dict):
-      continue
-    orld_d = copy.deepcopy(d)
-    for f in orld_d:
-      if f not in translateable_fields:
+  meta = frappe.get_meta(doctype)
+  if isinstance(data, list):
+    for d in data:
+      if not isinstance(d, dict):
         continue
-      d[f'{f}_en'] = d[f]
-      d[f] = _(d[f])
+      _update_transalte(meta, d)
+  else:
+    _update_transalte(meta, data)
   return data
+
+
+def _update_transalte(meta, d):
+  orld_d = copy.deepcopy(d)
+  translateable_fields = meta.get_translatable_fields()
+  for f, v in orld_d.items():
+    if isinstance(v, list):
+      field = meta.get_field(f)
+      if field.fieldtype in table_fields:
+        d[f] = update_transalte(meta.get_options(f), v)
+      continue
+    if f not in translateable_fields:
+      continue
+    d[f'{f}_en'] = v
+    d[f] = _(v)
