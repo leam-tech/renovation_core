@@ -109,7 +109,9 @@ def add_all_reqd_table_fields(doctypes=None):
             "p_doctype": doctype,
             "reference_id": field[1]
         })
-        doc.insert()
+        doc.autoname()
+        if not frappe.db.exists(doc.doctype, doc.name):
+          doc.insert()
     frappe.db.commit()
 
 
