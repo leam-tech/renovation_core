@@ -4,7 +4,7 @@ import frappe
 from six import string_types
 
 try:
-  from renovation_core.db.db_query import UpdatedDBQuery
+  from renovation_core.db.db_query import UpdatedDBQuery, update_transalte
 except ImportError:
   from .db_query import UpdatedDBQuery
 
@@ -15,6 +15,9 @@ def get_list_with_child(doctype, *args, **kwargs):
   While fetching Related Docs in renovation, we wont know the parent names..
   if frappe.is_table(doctype) and kwargs.get("fields"):
           check_parent_permission(parent)"""
+  user_lang = frappe.get_request_header('User-Language')
+  if user_lang:
+    frappe.local.lang = user_lang
 
   if "cmd" in kwargs:
     del kwargs["cmd"]
@@ -54,6 +57,8 @@ def get_list_with_child(doctype, *args, **kwargs):
         child_dt = get_child_dt(doctype, fieldname)
         m[fieldname] = frappe.get_list(child_dt, filters={
             "parenttype": doctype, "parent": m.name, "parentfield": fieldname}, fields=fields, order_by="idx")
+        if frappe.local.lang !='en':
+          m[fieldname] = update_transalte(child_dt, m[fieldname])
       ret.append(m)
 
     return ret
