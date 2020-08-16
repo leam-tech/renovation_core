@@ -15,9 +15,9 @@ def get_list_with_child(doctype, *args, **kwargs):
   While fetching Related Docs in renovation, we wont know the parent names..
   if frappe.is_table(doctype) and kwargs.get("fields"):
           check_parent_permission(parent)"""
-  user_lang = frappe.get_request_header('User-Language')
+  user_lang = frappe.get_request_header('Accept-Language')
   if user_lang:
-    frappe.local.lang = user_lang
+    frappe.local.lang = user_lang.split('-')[0]
 
   if "cmd" in kwargs:
     del kwargs["cmd"]
