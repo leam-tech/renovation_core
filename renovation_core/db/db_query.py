@@ -4,6 +4,8 @@ import json
 import frappe
 from frappe.model.db_query import DatabaseQuery
 from six import string_types
+from frappe import _
+import copy
 
 
 class UpdatedDBQuery(DatabaseQuery):
@@ -53,9 +55,11 @@ class UpdatedDBQuery(DatabaseQuery):
                                              update=update, add_total_row=add_total_row, user_settings=user_settings,
                                              return_query=return_query)
     if not self.as_list and self.with_link_fields:
-      return self.get_with_link_fields(_d)
-    else:
-      return _d
+      _d = self.get_with_link_fields(_d)
+    # Translate
+    if not self.as_list and frappe.local.lang != 'en':
+      _d = update_transalte(self.doctype, _d)
+    return _d
 
   def get_with_link_fields(self, data):
     self.meta = frappe.get_meta(self.doctype)
@@ -74,7 +78,7 @@ class UpdatedDBQuery(DatabaseQuery):
       _d = frappe.db.sql('''select * from `tab{}` where name in ('{}')'''.format(
           options, "', '".join(_lilnk_dict[l])), as_dict=True)
       for d in _d:
-        _docs[d.name] = d
+        _docs[d.name] = update_transalte(options, d) if frappe.local.lang != 'en' else d
     for d in data or []:
       for i in self.with_link_fields:
         if d.get(i):
@@ -101,3 +105,19 @@ def get_list(doctype, *args, **kwargs):
   '''wrapper for DatabaseQuery'''
   kwargs.pop('cmd', None)
   return UpdatedDBQuery(doctype).execute(None, *args, **kwargs)
+
+
+def update_transalte(doctype, data):
+  if not isinstance(data, list):
+    return data
+  translateable_fields = frappe.get_meta(doctype).get_translatable_fields()
+  for d in data:
+    if not isinstance(d, dict):
+      continue
+    orld_d = copy.deepcopy(d)
+    for f in orld_d:
+      if f not in translateable_fields:
+        continue
+      d[f'{f}_en'] = d[f]
+      d[f] = _(d[f])
+  return data
