@@ -37,7 +37,7 @@ def on_login(login_manager):
   import frappe.permissions
 
   frappe.cache().set_value(
-      f'can_use_quick_login_pin', user=frappe.session.user, val=1,
+      f'can_use_quick_login_pin', user=login_manager.user, val=1,
       expires_in_sec=(cint(frappe.db.get_value(
           "System Settings", None, "quick_login_window")) or 6) * 60 * 60
   )
