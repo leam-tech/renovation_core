@@ -1,5 +1,6 @@
 import click
-from frappe.commands import pass_context
+import frappe
+from frappe.commands import pass_context, get_site
 from renovation_core.app import serve as _serve
 
 
@@ -39,7 +40,41 @@ def serve(context, port=None, profile=False, no_reload=False, no_threading=False
          sites_path='.')
 
 
+@click.command('init-test-site')
+@click.option('--tests-for', type=click.Choice(["core-py", "core-ts", "core-dart"], case_sensitive=True),
+  prompt=True, help="Specify the test target based on which to initialize this site")
+@click.option('--reinstall', is_flag=True, prompt=True, help="Reinstall this site before initializing for tests")
+@pass_context
+def init_test_site(context, tests_for, reinstall):
+  """Initializes the current site for renovation-tests"""
+  site = get_site(context)
+  if reinstall:
+    from frappe.commands.site import _reinstall
+    _reinstall(site=site, yes=True)
+
+  try:
+    frappe.init(site=site)
+    frappe.connect()
+  
+    if tests_for == "core-py":
+      from renovation_core.tests import init_site
+      init_site()
+    elif tests_for == "core-ts":
+      from renovation_core.tests.core_ts import init_site
+      init_site()
+    elif tests_for == "core-dart":
+      from renovation_core.tests.core_dart import init_site
+      init_site()
+
+    frappe.db.commit()
+  except:
+    print(frappe.get_traceback())
+  finally:
+    frappe.destroy()
+
+
 renovation.add_command(setup)
 renovation.add_command(setup_nginx)
 renovation.add_command(serve)
+renovation.add_command(init_test_site)
 commands = [renovation]
