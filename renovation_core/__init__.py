@@ -36,12 +36,7 @@ def clear_cache():
 def on_login(login_manager):
   import frappe.permissions
 
-  frappe.cache().set_value(
-      f'can_use_quick_login_pin', user=frappe.session.user, val=1,
-      expires_in_sec=(cint(frappe.db.get_value(
-          "System Settings", None, "quick_login_window")) or 6) * 60 * 60
-  )
-
+  set_can_use_quick_login_pin(user=login_manager.user, can_use=True)
   append_user_info_to_response(login_manager.user)
 
 
@@ -88,3 +83,12 @@ def get_logged_user():
 def on_logout():
   from .utils.fcm import delete_token_on_logout
   delete_token_on_logout()
+  set_can_use_quick_login_pin(user=frappe.session.user, can_use=False)
+
+
+def set_can_use_quick_login_pin(user, can_use):
+  frappe.cache().set_value(
+      f'can_use_quick_login_pin', user=user, val=1 if can_use else 0,
+      expires_in_sec=(cint(frappe.db.get_value(
+          "System Settings", None, "quick_login_window")) or 6) * 60 * 60
+  )
