@@ -18,7 +18,9 @@ class RenovationDashboard(Document):
       self.name = self.title
 
   def on_update(self):
-    path = export_module_json(self, self.is_standard, self.module)
+    path = export_module_json(
+        doc=self, is_standard=self.is_standard == "Yes", module=self.module
+    )
     if path:
       # py
       if not os.path.exists(path + '.py'):
