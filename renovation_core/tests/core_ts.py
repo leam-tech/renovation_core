@@ -27,11 +27,16 @@ def create_reports():
     frappe.get_doc(frappe._dict(
         doctype="Report",
         report_name="TEST",
-        report_type="Report Builder",
+        report_type="Query Report",
         ref_doctype="Note",
         disabled=0,
         is_standard="No",
-        json="{}"
+        json="{}",
+        query="""SELECT
+    name AS 'Name:Data:200',
+    title AS 'Title:Data:200',
+    content AS 'Content:Data:200'
+FROM `tabNote`;"""
     )).insert()
 
   if not frappe.db.exists("Renovation Report", "TEST"):
