@@ -89,7 +89,8 @@ def create_users():
         new_password="test@test",
         first_name="Test User",
         quick_login_pin="1234",
-        send_welcome_email=0
+        send_welcome_email=0,
+        roles=[{"role": "Website Manager"}]
     )).insert()
 
 
