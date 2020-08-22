@@ -12,7 +12,7 @@ from .sms_setting import send_sms
 
 
 @frappe.whitelist(allow_guest=True)
-def generate_otp(medium="sms", medium_id=None, sms_hash=None, purpose="login"):
+def generate_otp(medium="sms", medium_id=None, sms_hash=None, purpose="login", lang="en"):
   """
   Generate and Send an OTP through the medium specified. we generate new pin on each call, ignoring previous pins
   :param medium: 'email' or 'sms'
@@ -28,6 +28,9 @@ def generate_otp(medium="sms", medium_id=None, sms_hash=None, purpose="login"):
     frappe.throw(f"medium_id is mandatory")
 
   user = get_linked_user(id_type=medium, id=medium_id)
+  if user:
+    lang = frappe.db.get_value("User", user, "language")
+  frappe.local.lang = lang
 
   # generate a pin
   otp = frappe.safe_decode(str(get_otp()))
