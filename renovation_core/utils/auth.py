@@ -15,10 +15,18 @@ from .sms_setting import send_sms
 def generate_otp(medium="sms", medium_id=None, sms_hash=None, purpose="login", lang="en"):
   """
   Generate and Send an OTP through the medium specified. we generate new pin on each call, ignoring previous pins
+
+  3 variables available to render in template:
+    - otp
+    - mobile_no (if sms)
+    - email (if email)
+    - user (the User object)
+
   :param medium: 'email' or 'sms'
   :param medium_id: The actual email/mobile_no
   :param sms_hash: The hash that should be appended to OTP SMS
   :param purpose: Specify an optional purpose (login, pwd_reset) to make a custom context
+  :param lang: Language of the OTP message (SMS or Email)
   """
 
   if medium not in ("sms", "email"):
