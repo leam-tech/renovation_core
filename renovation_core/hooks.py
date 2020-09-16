@@ -30,6 +30,14 @@ fixtures = [
     {
         "dt": "Renovation Script",
         "filters": [["name", "IN", ["Data Import", "Data Export", "Broadcast Message RScript"]]]
+    },
+    {
+        "dt": "Email Template",
+        "filters": [["name", "IN", ["Default Email OTP Template"]]]
+    },
+    {
+        "dt": "SMS Template",
+        "filters": [["name", "IN", ["Default SMS OTP Template"]]]
     }
 ]
 
@@ -85,6 +93,7 @@ has_permission = {
 
 # before_install = "renovation_core.install.before_install"
 after_install = "renovation_core.install.after_install.after_install"
+after_migrate = "renovation_core.install.after_migrate.after_migrate"
 
 # Desk Notifications
 # ------------------

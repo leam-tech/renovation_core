@@ -12,13 +12,21 @@ from .sms_setting import send_sms
 
 
 @frappe.whitelist(allow_guest=True)
-def generate_otp(medium="sms", medium_id=None, sms_hash=None, purpose="login"):
+def generate_otp(medium="sms", medium_id=None, sms_hash=None, purpose="login", lang="en"):
   """
   Generate and Send an OTP through the medium specified. we generate new pin on each call, ignoring previous pins
+
+  3 variables available to render in template:
+    - otp
+    - mobile_no (if sms)
+    - email (if email)
+    - user (the User object)
+
   :param medium: 'email' or 'sms'
   :param medium_id: The actual email/mobile_no
   :param sms_hash: The hash that should be appended to OTP SMS
   :param purpose: Specify an optional purpose (login, pwd_reset) to make a custom context
+  :param lang: Language of the OTP message (SMS or Email)
   """
 
   if medium not in ("sms", "email"):
@@ -28,6 +36,9 @@ def generate_otp(medium="sms", medium_id=None, sms_hash=None, purpose="login"):
     frappe.throw(f"medium_id is mandatory")
 
   user = get_linked_user(id_type=medium, id=medium_id)
+  if user:
+    lang = frappe.db.get_value("User", user, "language")
+  frappe.local.lang = lang
 
   # generate a pin
   otp = frappe.safe_decode(str(get_otp()))
@@ -47,9 +58,20 @@ def generate_otp(medium="sms", medium_id=None, sms_hash=None, purpose="login"):
 
   status = "success"
   if medium == "sms":
-    msg = u"Your verification OTP is: " + otp
+    sms_otp_template = frappe.db.get_value(
+      "System Settings", None, "sms_otp_template")
+    if not sms_otp_template:
+      frappe.throw("Please set SMS OTP Template in System Settings")
+    sms_otp_template = frappe.get_doc("SMS Template", sms_otp_template)
+    render_params = frappe._dict(
+        otp=otp,
+        mobile_no=medium_id,
+        user=frappe.get_doc("User", user) if user else frappe._dict()
+    )
+    msg = frappe.render_template(
+            sms_otp_template.template, render_params)
     if sms_hash:
-      msg = msg + u". " + sms_hash
+      msg = msg + u"\n" + sms_hash
     sms = send_sms([medium_id], msg, success_msg=False)
     status = "fail"
     # Since SMS Settings might remove or add '+' character, we will check against the last 5 digits

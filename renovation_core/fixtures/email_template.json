@@ -1,0 +1,13 @@
+[
+ {
+  "docstatus": 0,
+  "doctype": "Email Template",
+  "modified": "2020-08-15 13:25:20.192806",
+  "name": "Default Email OTP Template",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "response": "<div class=\"ql-editor read-mode\"><p>{{ _('Your verification OTP is:') }} {{ otp }}</p></div>",
+  "subject": "Please find your OTP inside"
+ }
+]
