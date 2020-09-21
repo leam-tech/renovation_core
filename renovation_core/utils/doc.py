@@ -6,6 +6,7 @@ from frappe.desk.form.save import set_local_name
 from renovation_core.utils import get_request_body, update_http_response
 from renovation_core.utils.docdefaults import apply_docdefaults
 from six import string_types
+from renovation_core.db.db_query import update_transalte
 
 
 def doc_handler(request_method, doctype, name=None):
@@ -30,7 +31,11 @@ def get_doc(doctype, name):
     doc = frappe.get_doc(doctype, name)
     if not doc.has_permission("read"):
       raise frappe.PermissionError
-    update_http_response({"data": doc.as_dict(), "status": "success"})
+    user_lang = frappe.get_request_header('Accept-Language')
+    if user_lang:
+      frappe.local.lang = user_lang.split('-')[0]
+    
+    update_http_response({"data": update_transalte(doc.doctype, doc.as_dict()), "status": "success"})
   except Exception as ex:
     update_http_response({"data": "failed", "status": "failed",
                           "exception": ex, "traceback": traceback.format_exc()})
