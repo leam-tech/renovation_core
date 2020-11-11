@@ -1,0 +1,84 @@
+{
+ "actions": [],
+ "creation": "2020-11-11 21:53:56.010349",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "sent_on",
+  "provider",
+  "message",
+  "no_of_sent_sms",
+  "sent_to",
+  "column_break_6",
+  "no_of_requested_sms",
+  "requested_numbers"
+ ],
+ "fields": [
+  {
+   "fieldname": "sent_on",
+   "fieldtype": "Datetime",
+   "label": "Sent On"
+  },
+  {
+   "fieldname": "provider",
+   "fieldtype": "Link",
+   "label": "Provider",
+   "options": "SMS Provider"
+  },
+  {
+   "fieldname": "message",
+   "fieldtype": "Small Text",
+   "label": "Message"
+  },
+  {
+   "fieldname": "no_of_sent_sms",
+   "fieldtype": "Int",
+   "label": "Number of Sent SMS"
+  },
+  {
+   "fieldname": "sent_to",
+   "fieldtype": "Small Text",
+   "label": "Sent To"
+  },
+  {
+   "fieldname": "column_break_6",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "no_of_requested_sms",
+   "fieldtype": "Int",
+   "label": "Number of Requested SMS"
+  },
+  {
+   "fieldname": "requested_numbers",
+   "fieldtype": "Small Text",
+   "label": "Requested Number"
+  }
+ ],
+ "in_create": 1,
+ "links": [],
+ "modified": "2020-11-11 21:53:56.010349",
+ "modified_by": "Administrator",
+ "module": "Renovation Core",
+ "name": "SMS Log",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "quick_entry": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

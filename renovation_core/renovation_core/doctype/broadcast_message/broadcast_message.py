@@ -133,7 +133,8 @@ class BroadcastMessage(Document):
         receiver_list=list(t.mobile_nos),
         msg=t.body,
         sender_name='',
-        success_msg=True
+        success_msg=True,
+        provider=self.get("sms_provider")
     )
 
   def send_via_email(self, t):

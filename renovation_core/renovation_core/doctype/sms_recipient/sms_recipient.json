@@ -1,0 +1,81 @@
+{
+ "actions": [],
+ "creation": "2020-11-11 20:00:48.146233",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "target_type",
+  "column_break_2",
+  "target_user",
+  "target_role",
+  "cmd",
+  "cmd_param",
+  "field_name",
+  "mobile_nos"
+ ],
+ "fields": [
+  {
+   "fieldname": "target_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Target Type",
+   "options": "User\nRole\ncmd\nField\nMobile Nos"
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:doc.target_type === \"User\"",
+   "fieldname": "target_user",
+   "fieldtype": "Link",
+   "label": "Target User",
+   "options": "User"
+  },
+  {
+   "depends_on": "eval:doc.target_type === \"Role\"",
+   "fieldname": "target_role",
+   "fieldtype": "Link",
+   "label": "Target Role",
+   "options": "Role"
+  },
+  {
+   "depends_on": "eval:doc.target_type === \"cmd\"",
+   "fieldname": "cmd",
+   "fieldtype": "Small Text",
+   "label": "cmd"
+  },
+  {
+   "depends_on": "eval:doc.target_type === \"cmd\"",
+   "description": "Please provide a python dictionary which can be given as a template optionally. eg: { \"name\": \"{{ doc.name }}\" }. Please note the quotes which is necessary for a well formed py.dict",
+   "fieldname": "cmd_param",
+   "fieldtype": "Code",
+   "label": "CMD Param"
+  },
+  {
+   "depends_on": "eval:doc.target_type === \"Field\"",
+   "fieldname": "field_name",
+   "fieldtype": "Select",
+   "label": "Field Name"
+  },
+  {
+   "depends_on": "eval: doc.target_type===\"Mobile Nos\"",
+   "fieldname": "mobile_nos",
+   "fieldtype": "Small Text",
+   "label": "Mobile Nos"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2020-11-11 21:18:47.510437",
+ "modified_by": "Administrator",
+ "module": "Renovation Core",
+ "name": "SMS Recipient",
+ "owner": "Administrator",
+ "permissions": [],
+ "quick_entry": 1,
+ "sort_field": "modified",
+ "sort_order": "ASC",
+ "track_changes": 1
+}

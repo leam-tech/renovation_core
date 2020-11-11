@@ -5,9 +5,10 @@ import frappe
 import six
 from frappe import _
 from frappe.email.doctype.notification.notification import get_context
-from frappe.utils import strip_html_tags
+from frappe.utils import strip_html_tags, strip_html
 
 from .fcm import notify_via_fcm
+from .sms_setting import get_sms_recipients_for_notification, send_sms
 
 """
 Overrides
@@ -29,12 +30,13 @@ def send_notification(self, doc):
 
   if self.channel == 'Email':
     self.send_an_email(doc, context)
-
-  if self.channel == 'Slack':
+  elif self.channel == 'Slack':
     self.send_a_slack_msg(doc, context)
-
-  if self.channel == 'FCM':
+  elif self.channel == 'FCM':
     send_via_fcm(self, doc, context)
+  elif self.channel == "SMS":
+    send_sms(receiver_list=get_sms_recipients_for_notification(notification=self, doc=doc, context=context),
+             msg=strip_html(frappe.render_template(self.message, context)), provider=self.sms_provider)
 
   if self.set_property_after_alert:
     frappe.db.set_value(doc.doctype, doc.name, self.set_property_after_alert,
