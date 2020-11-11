@@ -1,7 +1,7 @@
 {
  "actions": [],
  "allow_copy": 1,
- "autoname": "name:title",
+ "autoname": "field:title",
  "creation": "2020-11-11 16:20:55.730988",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -28,7 +28,8 @@
    "fieldname": "title",
    "fieldtype": "Data",
    "label": "Title",
-   "reqd": 1
+   "reqd": 1,
+   "unique": 1
   },
   {
    "description": "Eg. smsgateway.com/api/send_sms.cgi",
@@ -86,9 +87,8 @@
   }
  ],
  "icon": "fa fa-cog",
- "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2020-11-11 16:22:05.098469",
+ "modified": "2020-11-11 23:32:44.720170",
  "modified_by": "Administrator",
  "module": "Renovation Core",
  "name": "SMS Provider",

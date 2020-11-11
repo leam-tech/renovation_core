@@ -131,7 +131,8 @@ doc_events = {
         "on_change": "renovation_core.utils.meta.on_renovation_script_change"
     },
     "System Settings": {
-        "on_change": "renovation_core.doc_events.system_settings.on_change"
+        "on_change": "renovation_core.doc_events.system_settings.on_change",
+        "before_update": "renovation_core.doc_events.system_settings.before_update"
     },
     "Renovation Sidebar": {
         "on_change": "renovation_core.utils.renovation.clear_sidebar_cache"
