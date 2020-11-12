@@ -12,7 +12,8 @@
   "sent_to",
   "column_break_6",
   "no_of_requested_sms",
-  "requested_numbers"
+  "requested_numbers",
+  "amended_from"
  ],
  "fields": [
   {
@@ -54,17 +55,28 @@
    "fieldname": "requested_numbers",
    "fieldtype": "Small Text",
    "label": "Requested Number"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "SMS Log",
+   "print_hide": 1,
+   "read_only": 1
   }
  ],
  "in_create": 1,
+ "is_submittable": 1,
  "links": [],
- "modified": "2020-11-11 21:53:56.010349",
+ "modified": "2020-11-12 15:03:49.109189",
  "modified_by": "Administrator",
  "module": "Renovation Core",
  "name": "SMS Log",
  "owner": "Administrator",
  "permissions": [
   {
+   "amend": 1,
    "create": 1,
    "delete": 1,
    "email": 1,
@@ -74,6 +86,7 @@
    "report": 1,
    "role": "System Manager",
    "share": 1,
+   "submit": 1,
    "write": 1
   }
  ],

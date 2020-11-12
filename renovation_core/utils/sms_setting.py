@@ -133,7 +133,7 @@ def create_sms_log(args, sent_to, provider=None):
   sl.sent_to = "\n".join(sent_to)
   sl.provider = provider
   sl.flags.ignore_permissions = True
-  sl.save()
+  sl.submit()
 
 
 def get_sms_recipients_for_notification(notification, doc, context=None):

@@ -2,6 +2,23 @@
  {
   "app_name": "renovation_core",
   "default_value": null,
+  "doc_type": "Notification",
+  "docstatus": 0,
+  "doctype": "Property Setter",
+  "doctype_or_field": "DocField",
+  "field_name": "channel",
+  "modified": "2020-11-12 14:59:00.513215",
+  "name": "Notification-channel-options",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "property": "options",
+  "property_type": "Text",
+  "value": "Email\nSlack\nFCM\nSMS"
+ },
+ {
+  "app_name": "renovation_core",
+  "default_value": null,
   "doc_type": "Translation",
   "docstatus": 0,
   "doctype": "Property Setter",
