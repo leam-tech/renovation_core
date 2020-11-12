@@ -5,7 +5,7 @@ from frappe import throw, _, msgprint
 from frappe.core.doctype.sms_settings.sms_settings import get_headers
 from six import string_types
 from frappe.defaults import get_user_default
-from frappe.utils import now_datetime
+from frappe.utils import now_datetime, nowtime, get_time
 import ast
 
 
@@ -54,6 +54,18 @@ def send_via_gateway(arg, provider):
   ss = frappe.get_doc("SMS Provider", provider)
   if not ss.enabled:
     msgprint(_("SMS Provider is disabled."))
+    return "Fail"
+  # Check Timing
+  allow_now = False
+  if ss.timing:
+    for t in ss.timing:
+      if get_time(t.from_time) <= get_time(nowtime()) <= get_time(t.to_time):
+        allow_now=True
+        break 
+  else:
+    allow_now = True
+  if not allow_now:
+    msgprint(_("SMS Provider doesn't alow to send sms now."))
     return "Fail"
   headers = get_headers(ss)
 

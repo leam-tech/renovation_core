@@ -11,6 +11,7 @@
   "sms_gateway_url",
   "message_parameter",
   "receiver_parameter",
+  "timing",
   "static_parameters_section",
   "parameters",
   "start_with_plus",
@@ -84,11 +85,17 @@
    "fieldname": "request_as_json",
    "fieldtype": "Check",
    "label": "Request As JSON"
+  },
+  {
+   "fieldname": "timing",
+   "fieldtype": "Table",
+   "label": "Timing",
+   "options": "SMS Provider Timing"
   }
  ],
  "icon": "fa fa-cog",
  "links": [],
- "modified": "2020-11-11 23:32:44.720170",
+ "modified": "2020-11-12 13:47:51.429170",
  "modified_by": "Administrator",
  "module": "Renovation Core",
  "name": "SMS Provider",
