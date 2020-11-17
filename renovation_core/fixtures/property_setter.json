@@ -117,5 +117,22 @@
   "property": "autoname",
   "property_type": null,
   "value": "hashed"
+ },
+ {
+  "app_name": "renovation_core",
+  "default_value": null,
+  "doc_type": "Notification",
+  "docstatus": 0,
+  "doctype": "Property Setter",
+  "doctype_or_field": "DocField",
+  "field_name": "recipients",
+  "modified": "2020-11-17 18:12:50.426715",
+  "name": "Notification-recipients-mandatory_depends_on",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "property": "mandatory_depends_on",
+  "property_type": "Data",
+  "value": "eval:doc.channel==='Email' && !doc.send_to_all_assignees"
  }
 ]
