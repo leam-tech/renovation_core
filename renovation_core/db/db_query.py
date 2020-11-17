@@ -4,6 +4,9 @@ import json
 import frappe
 from frappe.model.db_query import DatabaseQuery
 from six import string_types
+from frappe import _
+import copy
+from frappe.model import table_fields
 
 
 class UpdatedDBQuery(DatabaseQuery):
@@ -53,9 +56,11 @@ class UpdatedDBQuery(DatabaseQuery):
                                              update=update, add_total_row=add_total_row, user_settings=user_settings,
                                              return_query=return_query)
     if not self.as_list and self.with_link_fields:
-      return self.get_with_link_fields(_d)
-    else:
-      return _d
+      _d = self.get_with_link_fields(_d)
+    # Translate
+    if not self.as_list and frappe.local.lang != 'en':
+      _d = update_transalte(self.doctype, _d)
+    return _d
 
   def get_with_link_fields(self, data):
     self.meta = frappe.get_meta(self.doctype)
@@ -64,7 +69,8 @@ class UpdatedDBQuery(DatabaseQuery):
     for d in data or []:
       for i in self.with_link_fields:
         if d.get(i):
-          opt = self.meta.get_options(i) if self.meta.get_field(i).fieldtype=="Link" else d.get(self.meta.get_options(i))
+          opt = self.meta.get_options(i) if self.meta.get_field(
+              i).fieldtype == "Link" else d.get(self.meta.get_options(i))
           key = '{}:{}'.format(i, opt)
           _lilnk_dict.setdefault(key, []).append(d.get(i))
     for l in _lilnk_dict:
@@ -74,7 +80,8 @@ class UpdatedDBQuery(DatabaseQuery):
       _d = frappe.db.sql('''select * from `tab{}` where name in ('{}')'''.format(
           options, "', '".join(_lilnk_dict[l])), as_dict=True)
       for d in _d:
-        _docs[d.name] = d
+        _docs[d.name] = update_transalte(
+            options, d) if frappe.local.lang != 'en' else d
     for d in data or []:
       for i in self.with_link_fields:
         if d.get(i):
@@ -101,3 +108,32 @@ def get_list(doctype, *args, **kwargs):
   '''wrapper for DatabaseQuery'''
   kwargs.pop('cmd', None)
   return UpdatedDBQuery(doctype).execute(None, *args, **kwargs)
+
+
+def update_transalte(doctype, data):
+  if frappe.local.lang == 'en' or not isinstance(data, (dict, list)):
+    return data
+  meta = frappe.get_meta(doctype)
+  if isinstance(data, list):
+    for d in data:
+      if not isinstance(d, dict):
+        continue
+      _update_transalte(meta, d)
+  else:
+    _update_transalte(meta, data)
+  return data
+
+
+def _update_transalte(meta, d):
+  orld_d = copy.deepcopy(d)
+  translateable_fields = meta.get_translatable_fields()
+  for f, v in orld_d.items():
+    if isinstance(v, list):
+      field = meta.get_field(f)
+      if field.fieldtype in table_fields:
+        d[f] = update_transalte(meta.get_options(f), v)
+      continue
+    if f not in translateable_fields:
+      continue
+    d[f'{f}_en'] = v
+    d[f] = _(v)

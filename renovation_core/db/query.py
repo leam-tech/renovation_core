@@ -4,7 +4,7 @@ import frappe
 from six import string_types
 
 try:
-  from renovation_core.db.db_query import UpdatedDBQuery
+  from renovation_core.db.db_query import UpdatedDBQuery, update_transalte
 except ImportError:
   from .db_query import UpdatedDBQuery
 
@@ -15,6 +15,9 @@ def get_list_with_child(doctype, *args, **kwargs):
   While fetching Related Docs in renovation, we wont know the parent names..
   if frappe.is_table(doctype) and kwargs.get("fields"):
           check_parent_permission(parent)"""
+  user_lang = frappe.get_request_header('Accept-Language')
+  if user_lang:
+    frappe.local.lang = user_lang.split('-')[0]
 
   if "cmd" in kwargs:
     del kwargs["cmd"]
@@ -54,8 +57,32 @@ def get_list_with_child(doctype, *args, **kwargs):
         child_dt = get_child_dt(doctype, fieldname)
         m[fieldname] = frappe.get_list(child_dt, filters={
             "parenttype": doctype, "parent": m.name, "parentfield": fieldname}, fields=fields, order_by="idx")
+        if frappe.local.lang != 'en':
+          m[fieldname] = update_transalte(child_dt, m[fieldname])
       ret.append(m)
 
     return ret
   else:
     return UpdatedDBQuery(doctype).execute(None, *args, **kwargs)
+
+
+def _get_fields(fields=None):
+  if not fields:
+    return "name"
+  elif isinstance(fields, (tuple, list)):
+    if "name" not in fields:
+      if isinstance(fields, tuple):
+        fields = list(fields)
+      fields = fields.append("name")
+    return fields
+  elif isinstance(fields, string_types):
+    if fields == "*":
+      return fields
+    else:
+      fields = frappe.parse_json(fields) if fields.startswith(
+          "[") else fields.split(",")
+    if "name" not in fields:
+      fields.append("name")
+    return fields
+  else:
+    return "name"
