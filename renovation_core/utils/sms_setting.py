@@ -144,7 +144,8 @@ def get_sms_recipients_for_notification(notification, doc, context=None):
     if row.target_type == "Mobile Nos":
       recipients.extend(row.mobile_nos.split("\n"))
     elif row.target_type == "Field":
-      recipients.append(doc.get(row.field_name))
+      if doc.get(row.field_name):
+        recipients.append(doc.get(row.field_name))
     elif row.target_type == "User" and row.get("target_user"):
       user = frappe.get_cached_doc("User", row.get("target_user"))
       if user.mobile_no or user.phone:
