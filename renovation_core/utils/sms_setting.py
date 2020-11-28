@@ -85,15 +85,15 @@ def send_via_gateway(arg, provider):
                           headers, ss.use_post, ss.get('request_as_json'))
     if 200 <= status < 300:
       success_list.append(d)
-
+  log_doc = None
   if len(success_list) > 0:
     args.update(arg)
     if frappe.db.exists("DocType", "SMS Log"):
-      create_sms_log(args, success_list, provider=provider)
+      log_doc = create_sms_log(args, success_list, provider=provider)
     if arg.get('success_msg'):
       frappe.msgprint(_("SMS sent to following numbers: {0}").format(
           "\n" + "\n".join(success_list)))
-  return success_list
+  return log_doc and log_doc or success_list
 
 
 def send_request(gateway_url, params, headers=None, use_post=False, request_as_json=False):
@@ -134,6 +134,7 @@ def create_sms_log(args, sent_to, provider=None):
   sl.provider = provider
   sl.flags.ignore_permissions = True
   sl.submit()
+  return sl
 
 
 def get_sms_recipients_for_notification(notification, doc, context=None):

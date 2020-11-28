@@ -35,8 +35,11 @@ def send_notification(self, doc):
   elif self.channel == 'FCM':
     send_via_fcm(self, doc, context)
   elif self.channel == "SMS":
-    send_sms(receiver_list=get_sms_recipients_for_notification(notification=self, doc=doc, context=context),
-             msg=strip_html(frappe.render_template(self.message, context)), provider=self.sms_provider)
+    recipients = get_sms_recipients_for_notification(
+        notification=self, doc=doc, context=context)
+    if recipients:
+      send_sms(receiver_list=recipients, msg=strip_html(
+          frappe.render_template(self.message, context)), provider=self.sms_provider)
 
   if self.set_property_after_alert:
     frappe.db.set_value(doc.doctype, doc.name, self.set_property_after_alert,
