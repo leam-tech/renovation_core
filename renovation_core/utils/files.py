@@ -1,7 +1,7 @@
 import frappe
 from frappe.utils import add_to_date, now_datetime
 
-from .auth import make_jwt
+from .auth import get_bearer_token
 from .images import is_image_path
 
 
@@ -21,7 +21,7 @@ def get_attachments(doctype, name, only_images=False, ignore_permissions=False):
 
 
 @frappe.whitelist(allow_guest=True)
-def get_download_url(file_url, expire_on=None):
+def get_download_url(file_url, expires_in=None):
   try:
     _file = frappe.get_doc("File", {"file_url": file_url})
     if not is_downloadable_file(_file):
@@ -29,9 +29,8 @@ def get_download_url(file_url, expire_on=None):
 
     url = None
     if _file.is_private:
-      token = make_jwt(frappe.session.user, expire_on=expire_on or add_to_date(
-          date=now_datetime(), hours=3))
-      url = "{}?token={}".format(file_url, token)
+      token = get_bearer_token(frappe.session.user, expires_in=expires_in or 3 * 60 * 60)
+      url = "{}?token={}".format(file_url, token["access_token"])
     else:
       url = file_url
 
