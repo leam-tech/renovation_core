@@ -46,7 +46,7 @@ def send_sms(receiver_list, msg, sender_name='', success_msg=True, provider=None
   if provider or get_user_default("sms_settings"):
     return send_via_gateway(arg, provider=provider or get_user_default("sms_settings"))
   else:
-    msgprint(_("Please set default SMS Settings form System Setting."))
+    msgprint(_("Please set default SMS Provider in System Settings."))
     return "Fail"
 
 
@@ -65,7 +65,7 @@ def send_via_gateway(arg, provider):
   else:
     allow_now = True
   if not allow_now:
-    msgprint(_("SMS Provider doesn't alow to send sms now."))
+    msgprint(_("SMS Provider doesn't allow to send SMS now due to time restriction."))
     return "Fail"
   headers = get_headers(ss)
 
