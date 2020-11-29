@@ -91,10 +91,17 @@ def get_client_tokens(user=None):
 
 def _add_user_token(user, token, linked_sid=None):
   _existing = frappe.db.get_value(
-      "FCM User Token", {"token": token, "user": user})
+    "FCM User Token",
+    {"token": token},
+    ["name", "user"],
+    as_dict=1
+  )
   if _existing:
-    frappe.db.set_value("FCM User Token", _existing, "last_updated", now())
-    return frappe.get_doc("FCM User Token", _existing)
+    if _existing.user != user:
+      frappe.delete_doc("FCM User Token", _existing.name, force=1, ignore_permissions=True)
+    else:
+      frappe.db.set_value("FCM User Token", _existing.name, "last_updated", now())
+      return frappe.get_doc("FCM User Token", _existing.name)
 
   d = frappe.get_doc(frappe._dict(
       doctype="FCM User Token",
