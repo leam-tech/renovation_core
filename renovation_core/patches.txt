@@ -1,3 +1,4 @@
 renovation_core.patches.v1_1.detete_renovation_sms_pin_custom_field
 renovation_core.patches.v1_1.migrate_fcm_tokens_to_new_doctype
+renovation_core.patches.v1_1.delete_duplicate_fcm_tokens
 renovation_core.patches.v1_2.make_sms_provider_from_sms_setting
