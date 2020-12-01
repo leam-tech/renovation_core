@@ -134,7 +134,7 @@ class BroadcastMessage(Document):
         msg=t.body,
         sender_name='',
         success_msg=True,
-        provider=self.get("sms_provider")
+        provider=self.get("country_wise_sms_providers", default=[])
     )
 
   def send_via_email(self, t):

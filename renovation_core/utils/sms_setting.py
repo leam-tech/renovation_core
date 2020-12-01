@@ -1,5 +1,7 @@
 import re
 
+from phonenumbers.phonenumberutil import region_code_for_country_code
+
 import frappe
 from frappe import throw, _, msgprint
 from frappe.core.doctype.sms_settings.sms_settings import get_headers
@@ -7,6 +9,7 @@ from six import string_types
 from frappe.defaults import get_user_default
 from frappe.utils import now_datetime, nowtime, get_time
 import ast
+from phonenumbers import country_code_for_region, parse as parse_phone_number
 
 
 def validate_receiver_nos(receiver_list):
@@ -43,40 +46,56 @@ def send_sms(receiver_list, msg, sender_name='', success_msg=True, provider=None
       'message'		: frappe.safe_decode(msg).encode('utf-8'),
       'success_msg'	: success_msg
   }
-  if provider or get_user_default("sms_settings"):
-    return send_via_gateway(arg, provider=provider or get_user_default("sms_settings"))
-  else:
-    msgprint(_("Please set default SMS Provider in System Settings."))
-    return "Fail"
+  if not provider:
+    provider = get_default_sms_providers()
+  elif isinstance(provider, string_types):
+    provider = [{"provider": provider, "country": x.country, "code": x.code.lower()} for x in (
+        frappe.get_cached_doc("SMS Provider", provider).get("countries") or [])]
+    provider.append({"provider": provider, "country": "all", "code": "all"})
+  return send_via_gateway(arg, provider=provider)
+
+
+def get_default_sms_providers():
+  system_settings = frappe.get_single("System Settings")
+  return system_settings.sms_providers
 
 
 def send_via_gateway(arg, provider):
-  ss = frappe.get_doc("SMS Provider", provider)
-  if not ss.enabled:
-    msgprint(_("SMS Provider is disabled."))
-    return "Fail"
-  # Check Timing
-  allow_now = False
-  if ss.timing:
-    for t in ss.timing:
-      if get_time(t.from_time) <= get_time(nowtime()) <= get_time(t.to_time):
-        allow_now=True
-        break 
-  else:
-    allow_now = True
-  if not allow_now:
-    msgprint(_("SMS Provider doesn't allow to send SMS now due to time restriction."))
-    return "Fail"
-  headers = get_headers(ss)
-
-  args = {ss.message_parameter: re.sub(
-      r'\s+', ' ', safe_decode(arg.get('message')))}
-  for d in ss.get("parameters"):
-    if not d.header:
-      args[d.parameter] = d.value
-
+  code_wise_provider, provider_wise_time = _get_provider_validate_data(provider)
   success_list = []
+  error_message = []
+  provider_wise_success_list = frappe._dict()
+  args = {}
   for d in arg.get('receiver_list'):
+    country_code = _get_country_code(d)
+    if not (country_code in code_wise_provider or "all" in code_wise_provider):
+      error_message.append(_("Provider not found for {}").format(d))
+      continue
+    selected_provider = None
+    for p in code_wise_provider.get(country_code) or code_wise_provider.get("all"):
+      # Check Disabled
+      if not frappe.get_cached_value("SMS Provider", p, "enabled"):
+        continue
+      # Check Timing
+      allow_now = not provider_wise_time.get(p)
+      if provider_wise_time.get(p):
+        for t in provider_wise_time.get(p):
+          if get_time(t.from_time) <= get_time(nowtime()) <= get_time(t.to_time):
+            allow_now = True
+            break
+      if allow_now:
+        selected_provider = p
+        break
+    if not selected_provider:
+      error_message.append(
+          _("SMS Provider doesn't allow to send SMS now due to time restriction. For {}").format(d))
+    ss = frappe.get_cached_doc("SMS Provider", selected_provider)
+    headers = get_headers(ss)
+    args = {ss.message_parameter: re.sub(
+        r'\s+', ' ', safe_decode(arg.get('message')))}
+    for hp in ss.get("parameters"):
+      if not hp.header:
+        args[hp.parameter] = hp.value
     args[ss.receiver_parameter] = d
     url = ss.sms_gateway_url
     if "%(" in url:
@@ -84,16 +103,33 @@ def send_via_gateway(arg, provider):
     status = send_request(url, {} if "%(" in ss.sms_gateway_url else args,
                           headers, ss.use_post, ss.get('request_as_json'))
     if 200 <= status < 300:
+      provider_wise_success_list.setdefault(selected_provider, []).append(d)
       success_list.append(d)
-  log_doc = None
+  log_doc = []
   if len(success_list) > 0:
     args.update(arg)
     if frappe.db.exists("DocType", "SMS Log"):
-      log_doc = create_sms_log(args, success_list, provider=provider)
+      for p, s_list in provider_wise_success_list.items():
+        log_doc.append(create_sms_log(args, s_list, provider=p))
     if arg.get('success_msg'):
       frappe.msgprint(_("SMS sent to following numbers: {0}").format(
           "\n" + "\n".join(success_list)))
   return log_doc and log_doc or success_list
+
+
+def _get_country_code(number):
+  return region_code_for_country_code(parse_phone_number(number=number).country_code).lower()
+
+
+def _get_provider_validate_data(provider):
+  country_wise_provider = frappe._dict()
+  provider_wise_time = frappe._dict()
+  for x in provider or []:
+    key = x.get("code", default="") or "all"
+    country_wise_provider.setdefault(key.lower(), []).append(x.provider)
+    provider_wise_time.setdefault(
+        x.get("provider"), frappe.get_cached_doc("SMS Provider", x.provider).get("timing", default=[]))
+  return country_wise_provider, provider_wise_time
 
 
 def send_request(gateway_url, params, headers=None, use_post=False, request_as_json=False):

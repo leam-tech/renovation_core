@@ -16,7 +16,8 @@
   "parameters",
   "start_with_plus",
   "use_post",
-  "request_as_json"
+  "request_as_json",
+  "countries"
  ],
  "fields": [
   {
@@ -91,11 +92,17 @@
    "fieldtype": "Table",
    "label": "Timing",
    "options": "SMS Provider Timing"
+  },
+  {
+   "fieldname": "countries",
+   "fieldtype": "Table MultiSelect",
+   "label": "Countries",
+   "options": "SMS Provider Country"
   }
  ],
  "icon": "fa fa-cog",
  "links": [],
- "modified": "2020-11-12 13:47:51.429170",
+ "modified": "2020-11-29 20:15:21.103585",
  "modified_by": "Administrator",
  "module": "Renovation Core",
  "name": "SMS Provider",

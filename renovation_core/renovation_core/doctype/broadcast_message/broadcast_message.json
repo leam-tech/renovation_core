@@ -11,7 +11,7 @@
   "status",
   "section_break_5",
   "medium",
-  "sms_provider",
+  "country_wise_sms_providers",
   "targets",
   "amended_from"
  ],
@@ -67,16 +67,16 @@
   },
   {
    "depends_on": "eval: doc.medium===\"SMS\"",
-   "fieldname": "sms_provider",
-   "fieldtype": "Link",
-   "label": "SMS Provider",
-   "options": "SMS Provider"
+   "fieldname": "country_wise_sms_providers",
+   "fieldtype": "Table",
+   "label": "SMS Providers",
+   "options": "Country Wise SMS Provider"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2020-11-11 21:10:32.342448",
+ "modified": "2020-11-30 18:22:07.615447",
  "modified_by": "Administrator",
  "module": "Renovation Core",
  "name": "Broadcast Message",
