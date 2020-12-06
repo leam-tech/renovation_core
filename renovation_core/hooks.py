@@ -63,7 +63,9 @@ has_permission = {
 # page_js = {"page" : "public/js/file.js"}
 
 # include js in doctype views
-# doctype_js = {"doctype" : "public/js/doctype.js"}
+doctype_js = {
+    "Notification": "public/js/notification.js"
+}
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
@@ -129,7 +131,8 @@ doc_events = {
         "on_change": "renovation_core.utils.meta.on_renovation_script_change"
     },
     "System Settings": {
-        "on_change": "renovation_core.doc_events.system_settings.on_change"
+        "on_change": "renovation_core.doc_events.system_settings.on_change",
+        "before_update": "renovation_core.doc_events.system_settings.before_update"
     },
     "Renovation Sidebar": {
         "on_change": "renovation_core.utils.renovation.clear_sidebar_cache"

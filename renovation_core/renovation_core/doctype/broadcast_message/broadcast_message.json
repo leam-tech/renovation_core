@@ -1,4 +1,5 @@
 {
+ "actions": [],
  "creation": "2020-01-08 21:28:29.985904",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -10,6 +11,7 @@
   "status",
   "section_break_5",
   "medium",
+  "country_wise_sms_providers",
   "targets",
   "amended_from"
  ],
@@ -62,10 +64,19 @@
    "label": "Targets",
    "options": "Broadcast Message Target Item",
    "reqd": 1
+  },
+  {
+   "depends_on": "eval: doc.medium===\"SMS\"",
+   "fieldname": "country_wise_sms_providers",
+   "fieldtype": "Table",
+   "label": "SMS Providers",
+   "options": "Country Wise SMS Provider"
   }
  ],
+ "index_web_pages_for_search": 1,
  "is_submittable": 1,
- "modified": "2020-03-31 09:35:15.547138",
+ "links": [],
+ "modified": "2020-11-30 18:22:07.615447",
  "modified_by": "Administrator",
  "module": "Renovation Core",
  "name": "Broadcast Message",

@@ -1,9 +1,22 @@
 [
  {
-  "_assign": null,
-  "_comments": null,
-  "_liked_by": null,
-  "_user_tags": null,
+  "app_name": "renovation_core",
+  "default_value": null,
+  "doc_type": "Notification",
+  "docstatus": 0,
+  "doctype": "Property Setter",
+  "doctype_or_field": "DocField",
+  "field_name": "channel",
+  "modified": "2020-11-12 14:59:00.513215",
+  "name": "Notification-channel-options",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "property": "options",
+  "property_type": "Text",
+  "value": "Email\nSlack\nFCM\nSMS"
+ },
+ {
   "app_name": "renovation_core",
   "default_value": null,
   "doc_type": "Translation",
@@ -21,10 +34,6 @@
   "value": "hashed"
  },
  {
-  "_assign": null,
-  "_comments": null,
-  "_liked_by": null,
-  "_user_tags": null,
   "app_name": "renovation_core",
   "default_value": null,
   "doc_type": "Website Slideshow Item",
@@ -42,10 +51,6 @@
   "value": "3"
  },
  {
-  "_assign": null,
-  "_comments": null,
-  "_liked_by": null,
-  "_user_tags": null,
   "app_name": "renovation_core",
   "default_value": null,
   "doc_type": "Website Slideshow Item",
@@ -63,10 +68,6 @@
   "value": null
  },
  {
-  "_assign": null,
-  "_comments": null,
-  "_liked_by": null,
-  "_user_tags": null,
   "app_name": "renovation_core",
   "default_value": null,
   "doc_type": "SMS Settings",
@@ -84,31 +85,6 @@
   "value": "Small Text"
  },
  {
-  "_assign": null,
-  "_comments": null,
-  "_liked_by": null,
-  "_user_tags": null,
-  "app_name": "renovation_core",
-  "default_value": null,
-  "doc_type": "Notification",
-  "docstatus": 0,
-  "doctype": "Property Setter",
-  "doctype_or_field": "DocField",
-  "field_name": "channel",
-  "modified": "2019-07-12 08:45:38.613114",
-  "name": "Notification-channel-options",
-  "parent": null,
-  "parentfield": null,
-  "parenttype": null,
-  "property": "options",
-  "property_type": "Text",
-  "value": "Email\nSlack\nFCM"
- },
- {
-  "_assign": null,
-  "_comments": null,
-  "_liked_by": null,
-  "_user_tags": null,
   "app_name": "renovation_core",
   "default_value": null,
   "doc_type": "Communication",
@@ -126,10 +102,6 @@
   "value": "\nEmail\nChat\nPhone\nSMS\nEvent\nMeeting\nVisit\nFCM\nOther"
  },
  {
-  "_assign": null,
-  "_comments": null,
-  "_liked_by": null,
-  "_user_tags": null,
   "app_name": "renovation_core",
   "default_value": null,
   "doc_type": "Custom DocPerm",
@@ -145,5 +117,22 @@
   "property": "autoname",
   "property_type": null,
   "value": "hashed"
+ },
+ {
+  "app_name": "renovation_core",
+  "default_value": null,
+  "doc_type": "Notification",
+  "docstatus": 0,
+  "doctype": "Property Setter",
+  "doctype_or_field": "DocField",
+  "field_name": "recipients",
+  "modified": "2020-11-17 18:12:50.426715",
+  "name": "Notification-recipients-mandatory_depends_on",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "property": "mandatory_depends_on",
+  "property_type": "Data",
+  "value": "eval:doc.channel==='Email' && !doc.send_to_all_assignees"
  }
 ]
