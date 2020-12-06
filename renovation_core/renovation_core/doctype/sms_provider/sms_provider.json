@@ -63,7 +63,7 @@
    "width": "50%"
   },
   {
-   "description": "Enter static url parameters here (Eg. sender=ERPNext, username=ERPNext, password=1234 etc.)",
+   "description": "Enter static url parameters here (Eg. sender=Leam, username=leam_user, password=1234 etc.)",
    "fieldname": "parameters",
    "fieldtype": "Table",
    "label": "Static Parameters",
