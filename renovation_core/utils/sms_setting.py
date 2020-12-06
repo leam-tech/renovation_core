@@ -60,8 +60,8 @@ def get_default_sms_providers():
   return system_settings.sms_providers
 
 
-def send_via_gateway(arg, provider):
-  code_wise_provider, provider_wise_time = _get_provider_validate_data(provider)
+def send_via_gateway(arg, providers):
+  code_wise_provider, provider_wise_time = _get_provider_validate_data(providers)
   success_list = []
   error_message = []
   provider_wise_success_list = frappe._dict()
