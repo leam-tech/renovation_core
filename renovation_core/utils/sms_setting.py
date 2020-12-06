@@ -49,7 +49,10 @@ def send_sms(receiver_list, msg, sender_name='', success_msg=True, provider=None
     provider = [{"provider": provider, "country": x.country, "code": x.code.lower()} for x in (
         frappe.get_cached_doc("SMS Provider", provider).get("countries") or [])]
     provider.append({"provider": provider, "country": "all", "code": "all"})
-  return send_via_gateway(arg, provider=provider)
+  if provider:
+    return send_via_gateway(arg, providers=provider)
+  else:
+    frappe.throw(_("Please Update SMS Settings"))
 
 
 def get_default_sms_providers():
