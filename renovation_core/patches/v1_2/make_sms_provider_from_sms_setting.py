@@ -2,7 +2,7 @@ import frappe
 
 
 def execute():
-  frappe.reload_doctype("SMS Provider")
+  frappe.reload_doc("renovation_core", "doctype", "sms_provider")
   sms_settings = frappe.get_doc("SMS Settings", "SMS Settings")
   if sms_settings.sms_gateway_url and not frappe.db.exists("SMS Provider", {"sms_gateway_url": sms_settings.sms_gateway_url}):
     doc = frappe.new_doc("SMS Provider")
