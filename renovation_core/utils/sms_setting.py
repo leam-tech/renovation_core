@@ -1,15 +1,13 @@
+import ast
 import re
 
-from phonenumbers.phonenumberutil import region_code_for_country_code
-
 import frappe
-from frappe import throw, _, msgprint
+from frappe import throw, _
 from frappe.core.doctype.sms_settings.sms_settings import get_headers
-from six import string_types
-from frappe.defaults import get_user_default
 from frappe.utils import now_datetime, nowtime, get_time
-import ast
-from phonenumbers import country_code_for_region, parse as parse_phone_number
+from phonenumbers import parse as parse_phone_number
+from phonenumbers.phonenumberutil import region_code_for_country_code
+from six import string_types
 
 
 def validate_receiver_nos(receiver_list):
@@ -20,7 +18,7 @@ def validate_receiver_nos(receiver_list):
     for x in [' ', '-', '(', ')']:
       d = d.replace(x, '')
     if plus and plus == "Add" and d[0] != '+':
-      d = '+'+d
+      d = '+' + d
     elif plus and plus == "Remove" and d[0] == '+':
       d = d[1:]
     validated_receiver_list.append(d)
@@ -32,7 +30,6 @@ def validate_receiver_nos(receiver_list):
 
 @frappe.whitelist()
 def send_sms(receiver_list, msg, sender_name='', success_msg=True, provider=None):
-
   import json
   if isinstance(receiver_list, string_types):
     receiver_list = json.loads(receiver_list)
@@ -43,8 +40,8 @@ def send_sms(receiver_list, msg, sender_name='', success_msg=True, provider=None
 
   arg = {
       'receiver_list': receiver_list,
-      'message'		: frappe.safe_decode(msg).encode('utf-8'),
-      'success_msg'	: success_msg
+      'message': frappe.safe_decode(msg).encode('utf-8'),
+      'success_msg': success_msg
   }
   if not provider:
     provider = get_default_sms_providers()
@@ -154,6 +151,7 @@ def safe_decode(string, encoding='utf-8'):
   except Exception:
     pass
   return string
+
 
 # Create SMS Log
 # =========================================================
