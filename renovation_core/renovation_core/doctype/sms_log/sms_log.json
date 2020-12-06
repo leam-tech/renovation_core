@@ -69,7 +69,7 @@
  "in_create": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2020-11-12 15:03:49.109189",
+ "modified": "2020-12-06 15:16:56.343499",
  "modified_by": "Administrator",
  "module": "Renovation Core",
  "name": "SMS Log",
@@ -78,7 +78,6 @@
   {
    "amend": 1,
    "create": 1,
-   "delete": 1,
    "email": 1,
    "export": 1,
    "print": 1,
