@@ -57,7 +57,7 @@ def send_sms(receiver_list, msg, sender_name='', success_msg=True, provider=None
 
 def get_default_sms_providers():
   system_settings = frappe.get_single("System Settings")
-  return system_settings.sms_providers or system_settings.sms_settings
+  return system_settings.sms_providers or [frappe._dict(provider=system_settings.sms_settings)]
 
 
 def send_via_gateway(arg, providers):
@@ -125,10 +125,10 @@ def _get_provider_validate_data(provider):
   country_wise_provider = frappe._dict()
   provider_wise_time = frappe._dict()
   for x in provider or []:
-    key = x.get("code", default="") or "all"
+    key = x.get("code") or "all"
     country_wise_provider.setdefault(key.lower(), []).append(x.provider)
     provider_wise_time.setdefault(
-        x.get("provider"), frappe.get_cached_doc("SMS Provider", x.provider).get("timing", default=[]))
+        x.get("provider"), frappe.get_cached_doc("SMS Provider", x.provider).get("timing") or [])
   return country_wise_provider, provider_wise_time
 
 
