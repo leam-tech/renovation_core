@@ -39,7 +39,7 @@ def send_notification(self, doc):
         notification=self, doc=doc, context=context)
     if recipients:
       send_sms(receiver_list=recipients, msg=strip_html(
-          frappe.render_template(self.message, context)), provider=self.sms_provider)
+          frappe.render_template(self.message, context)), provider=self.sms_providers)
 
   if self.set_property_after_alert:
     frappe.db.set_value(doc.doctype, doc.name, self.set_property_after_alert,
