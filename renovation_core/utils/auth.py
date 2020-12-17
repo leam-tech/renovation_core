@@ -1,5 +1,7 @@
 import random
 
+from six import string_types
+
 import frappe
 import jwt
 from frappe import _
@@ -75,7 +77,7 @@ def generate_otp(medium="sms", medium_id=None, sms_hash=None, purpose="login", l
     sms = send_sms([medium_id], msg, success_msg=False)
     status = "fail"
     # Since SMS Settings might remove or add '+' character, we will check against the last 5 digits
-    if sms and isinstance(sms, list) and len(sms) == 1 and medium_id[-5:] in sms[0]:
+    if sms and isinstance(sms, list) and len(sms) == 1 and (medium_id[-5:] in sms[0] if isinstance(sms[0], string_types) else medium_id[-5:] in sms[0].sent_to):
       status = "success"
   elif medium == "email":
     email_otp_template = frappe.db.get_value(
