@@ -57,17 +57,9 @@ class RenovationHTTPRequest(HTTPRequest):
       jwt_token = frappe.request.args.get("token")
 
     if jwt_token:
-      frappe.flags.jwt = jwt_token
-      token_info = jwt.decode(
-          jwt_token, frappe.utils.password.get_encryption_key())
-
-      # Not checking by IP since it could change on network change (Wifi -> Mobile Network)
-      # if token_info.get('ip') != frappe.local.request_ip:
-      # 	frappe.throw(frappe._("Invalide IP", frappe.AuthenticationError))
-
-      # werkzueg cookies structure is immutable
-      frappe.request.cookies = frappe._dict(frappe.request.cookies)
-      frappe.request.cookies['sid'] = token_info.get('sid')
+      headers = frappe._dict(frappe.request.headers)
+      headers["Authorization"] = f"Bearer {jwt_token}"
+      frappe.request.headers = headers
 
     # load cookies
     frappe.local.cookie_manager = CookieManagerJWT()
