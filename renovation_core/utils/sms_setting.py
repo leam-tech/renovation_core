@@ -118,6 +118,7 @@ def send_via_gateway(arg, providers):
 
 
 def _get_country_code(number):
+  number = f"+{number}" if number[0] != "+" else number
   return region_code_for_country_code(parse_phone_number(number=number).country_code).lower()
 
 
