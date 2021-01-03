@@ -12,7 +12,7 @@ from .utils.notification import send_notification
 from .utils.sms_setting import validate_receiver_nos
 from .utils.sync import _get_doc_files, process
 
-__version__ = '1.3.3'
+__version__ = '1.4.1'
 
 Meta.process = process
 frappe.model.sync.get_doc_files = _get_doc_files
@@ -41,10 +41,12 @@ def on_login(login_manager):
 
 
 def on_session_creation(login_manager):
-  from .utils.auth import make_jwt
+  from .utils.auth import get_bearer_token
   if frappe.form_dict.get('use_jwt') and cint(frappe.form_dict.get('use_jwt')):
-    frappe.local.response['token'] = make_jwt(
-        login_manager.user, frappe.flags.get('jwt_expire_on'))
+    expires_in = 604800
+    frappe.local.response['token'] = get_bearer_token(
+      user=login_manager.user, expires_in=expires_in
+    )["access_token"]
     frappe.flags.jwt_clear_cookies = True
 
 
