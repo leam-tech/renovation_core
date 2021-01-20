@@ -1,28 +1,26 @@
 import frappe
-import jwt
+from frappe.api import validate_auth
 from frappe.utils import cint
 
 
 @frappe.whitelist(allow_guest=True)
 def get_user_info(token=None, sid=None):
+    if token:
+        # Bearer Token
+        validate_auth()
+    else:
+        # Get the user from the request
+        frappe.set_user(frappe.session.user)
 
-  if token:
-    token_info = jwt.decode(token, frappe.utils.password.get_encryption_key())
-    frappe.form_dict['sid'] = token_info.get('sid')
+    current_user = frappe.session.user
+    data = {
+        'user': current_user,
+        'sid': current_user
+    }
 
-  from frappe.sessions import Session
+    if data["user"] == "Guest":
+        # check if guests are allowed
+        data["allow_guest"] = cint(frappe.db.get_value(
+            "System Settings", None, "socketio_allow_guest") or 0)
 
-  # sid is obtained from frappe.form_dict.sid (which is present here)
-  # sessions.py LN#183
-  session = Session(None, resume=True).get_session_data()
-  data = {
-      'user': session.user,
-      'sid': frappe.session.sid
-  }
-
-  if data["user"] == "Guest":
-    # check if guests are allowed
-    data["allow_guest"] = cint(frappe.db.get_value(
-        "System Settings", None, "socketio_allow_guest") or 0)
-
-  return data
+    return data
