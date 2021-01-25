@@ -8,14 +8,10 @@ def get_user_info(token=None, sid=None):
     if token:
         # Bearer Token
         validate_auth()
-    else:
-        # Get the user from the request
-        frappe.set_user(frappe.session.user)
-
     current_user = frappe.session.user
     data = {
         'user': current_user,
-        'sid': current_user
+        'sid': frappe.session.sid if not token else current_user
     }
 
     if data["user"] == "Guest":
