@@ -473,7 +473,7 @@ function getRenovationUserDetails(socket) {
             // Sending auth token both in header and in query param due to inconsistent behaviour observed
             // This ensures that somehow the token gets to the server and is validated for appropriate response
             headers["Authorization"] = socket.request.headers.authorization.replace("JWTToken", "Bearer");
-            query.token = getToken(socket);
+            query.token = getJwtToken(socket);
         }
 
         request.get(get_url(socket, '/api/method/renovation_core.realtime.get_user_info'))
@@ -497,11 +497,11 @@ function getRenovationUserDetails(socket) {
     });
 }
 
-function getToken(socket) {
+function getJwtToken(socket) {
     const auth = socket.request.headers.authorization;
     if (auth && typeof (auth) === "string") {
         const d = auth.split(" ");
-        if (d[0].toLowerCase().indexOf("bearer") >= 0) {
+        if (d[0].toLowerCase().indexOf("jwt") >= 0) {
             return d[1];
         }
     }
