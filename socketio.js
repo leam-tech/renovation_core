@@ -472,7 +472,7 @@ function getRenovationUserDetails(socket) {
         if (socket.request.headers.authorization) {
             // Sending auth token both in header and in query param due to inconsistent behaviour observed
             // This ensures that somehow the token gets to the server and is validated for appropriate response
-            headers["Authorization"] = socket.request.headers.authorization;
+            headers["Authorization"] = socket.request.headers.authorization.replace("JWTToken", "Bearer");
             query.token = getJwtToken(socket);
         }
 
@@ -501,7 +501,7 @@ function getJwtToken(socket) {
     const auth = socket.request.headers.authorization;
     if (auth && typeof (auth) === "string") {
         const d = auth.split(" ");
-        if (d[0].toLowerCase().indexOf("jwt") >= 0) {
+        if (d[0].toLowerCase().indexOf("jwt") >= 0 || d[0].toLowerCase().indexOf("bearer") >= 0) {
             return d[1];
         }
     }
