@@ -501,7 +501,7 @@ function getJwtToken(socket) {
     const auth = socket.request.headers.authorization;
     if (auth && typeof (auth) === "string") {
         const d = auth.split(" ");
-        if (d[0].toLowerCase().indexOf("jwt") >= 0) {
+        if (d[0].toLowerCase().indexOf("jwt") >= 0 || d[0].toLowerCase().indexOf("bearer") >= 0) {
             return d[1];
         }
     }
