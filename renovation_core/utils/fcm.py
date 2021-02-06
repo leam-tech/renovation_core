@@ -337,7 +337,6 @@ def get_huawei_auth_token(config):
                                  headers=headers)
     access_token = "{} {}".format(response.get('token_type'),response.get('access_token'))
   except Exception as exc:
-    exc = getattr(response, "exception", response)
     code = getattr(exc, "code", "no-code")
     message = getattr(exc, "message", exc)
     detail = getattr(exc, "detail", "no-details")
