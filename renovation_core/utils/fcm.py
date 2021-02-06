@@ -361,7 +361,6 @@ def send_huawei_notifications(tokens=None, topic=None, title=None, body=None, da
                                     recipient_count=len(tokens))
     print("Sending to tokens: {}".format(tokens))
   elif topic:
-    url = "https://push-api.cloud.huawei.com/v1/{}/topic:subscribe".format(app_id)
     message.update({"topic":topic})
     try:
       payload = frappe._dict(validate_only=False, message=message)
@@ -382,7 +381,10 @@ def send_huawei_notifications(tokens=None, topic=None, title=None, body=None, da
   return response
 
 def delete_huawei_invalid_tokens(tokens):
-  pass
+  for t in tokens:
+    t = frappe.db.get_value("Huawei User Token", {"token": t})
+    if t:
+      frappe.delete_doc("Huawei User Token", t, ignore_permissions=True)
 
 
 def delete_invalid_tokens(tokens, responses):
@@ -465,6 +467,7 @@ def huawei_push_kit_error_handler(tokens=None, topic=None, title=None, body=None
     msg = frappe.parse_json(response.get('msg'))
     success_count = msg.get('success')
     failure_count = msg.get('failure')
+    delete_huawei_invalid_tokens(frappe.parse_json(msg.get("illegal_tokens","")))
   preMessage = "Tokens: {}\nTopic: {}\nTitle: {}\nBody: {}\nData: {}\n Success/Recipients: {}/{} \n Failure:{}".format(
     tokens, topic, title, body, data, success_count, recipient_count,failure_count)
   if response.get('code')=='80000000':
