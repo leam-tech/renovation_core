@@ -136,6 +136,9 @@ def _add_user_token(user, token, linked_sid=None, is_huawei_token=False):
 
 
 def _delete_user_token(user, token):
+  ht = frappe.db.get_value("Huawei User Token", {"token": token, "user": user})
+  if ht:
+    frappe.delete_doc("Huawei User Token", ht, ignore_permissions=True)
   t = frappe.db.get_value("FCM User Token", {"token": token, "user": user})
   if not t:
     return
@@ -170,7 +173,7 @@ def _notify_via_fcm(title, body, data=None, roles=None, users=None, topics=None,
   topics = set(topics or [])
   for topic in topics:
     send_notification_to_topic(topic=topic, title=title, body=body, data=data)
-    send_notification_to_topic(topic=topic, title=title, body=body, data=data)
+    send_huawei_notification_to_topic(topic=topic, title=title, body=body, data=data)
 
   tokens = set(tokens or [])
   if len(tokens):
@@ -346,9 +349,16 @@ def send_huawei_notifications(tokens=None, topic=None, title=None, body=None, da
       payload = frappe._dict(validate_only=False, message=message)
       response = make_post_request(url, data=frappe.as_json(payload),
                                headers=headers)
-
-    except Exception:
-      pass
+      huawei_push_kit_error_handler(tokens=tokens, topic=topic, title=title, body=body,
+                        data=data,
+                        response=response,
+                        recipient_count=len(tokens))
+    except Exception as exc:
+      huawei_push_kit_error_handler(tokens=tokens, topic=topic, title=title,
+                                    body=body,
+                                    data=data,
+                                    response=exc,
+                                    recipient_count=len(tokens))
     print("Sending to tokens: {}".format(tokens))
   elif topic:
     url = "https://push-api.cloud.huawei.com/v1/{}/topic:subscribe".format(app_id)
@@ -357,9 +367,16 @@ def send_huawei_notifications(tokens=None, topic=None, title=None, body=None, da
       payload = frappe._dict(validate_only=False, message=message)
       response = make_post_request(url, data=frappe.as_json(payload),
                                headers=headers)
-
+      huawei_push_kit_error_handler(tokens=tokens, topic=topic, title=title, body=body,
+                        data=data,
+                        response=response,
+                        recipient_count=len(tokens))
     except Exception:
-      pass
+      huawei_push_kit_error_handler(tokens=tokens, topic=topic, title=title,
+                                    body=body,
+                                    data=data,
+                                    response=response,
+                                    recipient_count=len(tokens))
     print("Sent TOPIC {} Msg: {}".format(topic, response))
 
   return response
@@ -434,14 +451,26 @@ def fcm_error_handler(tokens=None, topic=None, title=None, body=None, data=None,
     frappe.log_error(
         title="FCM Error", message="{}\n- EXC\nCode: {}\nMessage: {}\nDetail: {}".format(preMessage, code, message, detail))
 
-def huawei_push_kit_error_handler(tokens=None, topic=None, title=None, body=None, data=None, responses=[], recipient_count=1, success_count=0):
-  preMessage = "Tokens: {}\nTopic: {}\nTitle: {}\nBody: {}\nData: {}\n Success/Recipients: {}/{}".format(
-    tokens, topic, title, body, data, success_count, recipient_count)
-  for r in responses:
-    if getattr(r, "success", False):
-      continue
-
-    exc = getattr(r, "exception", r)
+def huawei_push_kit_error_handler(tokens=None, topic=None, title=None, body=None, data=None, response=None, recipient_count=1):
+  # {
+  #   "code": "80000000",
+  #   "msg": "Success",
+  #   "requestId": "157440955549500001002006"
+  # }
+  success_count=0
+  failure_count=0
+  if isinstance(response,dict) and response.get('code') == '80000000':
+    success_count = recipient_count
+  elif isinstance(response,dict) and response.get('code') == '80100000':
+    msg = frappe.parse_json(response.get('msg'))
+    success_count = msg.get('success')
+    failure_count = msg.get('failure')
+  preMessage = "Tokens: {}\nTopic: {}\nTitle: {}\nBody: {}\nData: {}\n Success/Recipients: {}/{} \n Failure:{}".format(
+    tokens, topic, title, body, data, success_count, recipient_count,failure_count)
+  if response.get('code')=='80000000':
+    return
+  if response:
+    exc = getattr(response, "exception", response)
     code = getattr(exc, "code", "no-code")
     message = getattr(exc, "message", exc)
     detail = getattr(exc, "detail", "no-details")
