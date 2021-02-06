@@ -4,6 +4,7 @@ import firebase_admin
 import frappe
 from firebase_admin import credentials
 from firebase_admin import messaging
+from frappe.integrations.utils import make_post_request
 from frappe.model.naming import make_autoname
 from frappe.utils import cint, now
 from six import string_types
@@ -34,7 +35,7 @@ def get_firebase_certificate():
 
 
 @frappe.whitelist(allow_guest=True)
-def register_client(token, user=None):
+def register_client(token, user=None, is_huawei_token=False):
   if not user:
     user = frappe.session.user if frappe.session else "Guest"
 
@@ -50,7 +51,7 @@ def register_client(token, user=None):
   if is_valid_session_id(frappe.session.sid):
     linked_sid = frappe.session.sid
 
-  _add_user_token(user=user, token=token, linked_sid=linked_sid)
+  _add_user_token(user=user, token=token, linked_sid=linked_sid, is_huawei_token=is_huawei_token)
   return "OK"
 
 
@@ -88,23 +89,42 @@ def get_client_tokens(user=None):
 
   return tokens
 
+def get_huawei_client_tokens(user=None):
+  """
+  Returns a list of valid user Huawei tokens
+  """
+  if not user:
+    user = frappe.session.user if frappe.session else "Guest"
 
-def _add_user_token(user, token, linked_sid=None):
+  tokens = []
+  for t in frappe.get_all("Huawei User Token", fields=["name", "token", "linked_sid"], filters={"user": user}):
+    if t.linked_sid and not is_valid_session_id(t.linked_sid):
+      frappe.delete_doc("Huawei User Token", t.name, ignore_permissions=True)
+      continue
+    tokens.append(t.token)
+
+  return tokens
+
+
+def _add_user_token(user, token, linked_sid=None, is_huawei_token=False):
+  dt = "FCM User Token"
+  if is_huawei_token:
+    dt = "Huawei User Token"
   _existing = frappe.db.get_value(
-    "FCM User Token",
+    dt,
     {"token": token},
     ["name", "user"],
     as_dict=1
   )
   if _existing:
     if _existing.user != user:
-      frappe.delete_doc("FCM User Token", _existing.name, force=1, ignore_permissions=True)
+      frappe.delete_doc(dt, _existing.name, force=1, ignore_permissions=True)
     else:
-      frappe.db.set_value("FCM User Token", _existing.name, "last_updated", now())
-      return frappe.get_doc("FCM User Token", _existing.name)
+      frappe.db.set_value(dt, _existing.name, "last_updated", now())
+      return frappe.get_doc(dt, _existing.name)
 
   d = frappe.get_doc(frappe._dict(
-      doctype="FCM User Token",
+      doctype=dt,
       user=user,
       token=token,
       linked_sid=linked_sid,
@@ -112,6 +132,7 @@ def _add_user_token(user, token, linked_sid=None):
   ))
   d.insert(ignore_permissions=True)
   return d
+
 
 
 def _delete_user_token(user, token):
@@ -144,14 +165,18 @@ def _notify_via_fcm(title, body, data=None, roles=None, users=None, topics=None,
 
   for user in users:
     send_notification_to_user(user, title=title, body=body, data=data)
+    send_notification_to_user(user, title=title, body=body, data=data)
 
   topics = set(topics or [])
   for topic in topics:
+    send_notification_to_topic(topic=topic, title=title, body=body, data=data)
     send_notification_to_topic(topic=topic, title=title, body=body, data=data)
 
   tokens = set(tokens or [])
   if len(tokens):
     send_fcm_notifications(list(tokens), title=title, body=body, data=data)
+    send_huawei_notifications(list(tokens), title=title, body=body, data=data)
+
 
 
 def send_notification_to_topic(topic, title, body, data=None):
@@ -162,6 +187,18 @@ def send_notification_to_topic(topic, title, body, data=None):
                                        make_autoname("hash", "Communication"))
   # Message id response
   response = send_fcm_notifications(
+      topic=topic, title=title, body=body, data=data)
+  if response:
+    make_communication_doc(data.message_id, title, body, data, topic=topic)
+
+def send_huawei_notification_to_topic(topic, title, body, data=None):
+  if not data:
+    data = frappe._dict({})
+
+  data.message_id = "HUAWEI-{}-{}".format(topic,
+                                       make_autoname("hash", "Communication"))
+  # Message id response
+  response = send_huawei_notifications(
       topic=topic, title=title, body=body, data=data)
   if response:
     make_communication_doc(data.message_id, title, body, data, topic=topic)
@@ -178,6 +215,21 @@ def send_notification_to_user(user, title, body, data=None):
 
   # Batch Response
   response = send_fcm_notifications(
+      tokens=tokens, title=title, body=body, data=data)
+  if response and response.success_count > 0:
+    make_communication_doc(data.message_id, title, body, data, user=user)
+
+def _send_huawei_notification_to_user(user, title, body, data=None):
+  tokens = get_huawei_tokens_for("Users", users=[user])
+
+  if not data:
+    data = frappe._dict({})
+  # for saving purpose
+  data.message_id = "HUAWEI-{}-{}".format(user,
+                                       make_autoname("hash", "Communication"))
+
+  # Batch Response
+  response = send_huawei_notifications(
       tokens=tokens, title=title, body=body, data=data)
   if response and response.success_count > 0:
     make_communication_doc(data.message_id, title, body, data, user=user)
@@ -218,6 +270,21 @@ def get_tokens_for(target, roles=None, users=None):
 
   return [x for x in tokens if len(x) > 0]
 
+def get_huawei_tokens_for(target, roles=None, users=None):
+  if target == "Roles":
+    users = [x.parent for x in frappe.db.get_all(
+        "Has Role", fields=["distinct parent"], filters={"role": ["IN", roles or []]})]
+    target = "Users"
+
+  if target != "Users":
+    frappe.throw("Invalid Target")
+
+  tokens = []
+  for u in users:
+    tokens.extend(get_huawei_client_tokens(user=u))
+
+  return [x for x in tokens if len(x) > 0]
+
 
 def send_fcm_notifications(tokens=None, topic=None, title=None, body=None, data=None):
   global firebase_app
@@ -247,6 +314,58 @@ def send_fcm_notifications(tokens=None, topic=None, title=None, body=None, data=
                       responses=response.responses, recipient_count=1, success_count=0)
 
   return response
+
+def send_huawei_notifications(tokens=None, topic=None, title=None, body=None, data=None):
+  app_id = frappe.get_site_config().get("app_id")
+  if not app_id:
+    frappe.log_error(
+      title="Huawei Push Kit Error",
+      message="Message: {}".format(frappe._("Missing app id in site config")))
+    return
+  url = "https://push-api.cloud.huawei.com/v1/{}/messages:send".format(app_id)
+  # message format
+  # {
+  # data:str ,
+  # notification: { 'title' , 'body' , 'image' },
+  # android: check docs..,
+  # apns: check docs..,
+  # webpush: check docs..,
+  # token: [] ,
+  # topic: [] ,
+  # condition : '' check docs...
+  # }
+  message={
+    "data":frappe.as_json(data),
+    "notification":{"title":title,"body":body},
+    "token":tokens
+  }
+  response = None
+  headers={"Content-Type": "application/json"}
+  if tokens and len(tokens):
+    try:
+      payload = frappe._dict(validate_only=False, message=message)
+      response = make_post_request(url, data=frappe.as_json(payload),
+                               headers=headers)
+
+    except Exception:
+      pass
+    print("Sending to tokens: {}".format(tokens))
+  elif topic:
+    url = "https://push-api.cloud.huawei.com/v1/{}/topic:subscribe".format(app_id)
+    message.update({"topic":topic})
+    try:
+      payload = frappe._dict(validate_only=False, message=message)
+      response = make_post_request(url, data=frappe.as_json(payload),
+                               headers=headers)
+
+    except Exception:
+      pass
+    print("Sent TOPIC {} Msg: {}".format(topic, response))
+
+  return response
+
+def delete_huawei_invalid_tokens(tokens):
+  pass
 
 
 def delete_invalid_tokens(tokens, responses):
@@ -314,6 +433,26 @@ def fcm_error_handler(tokens=None, topic=None, title=None, body=None, data=None,
     print("- EXC\nCode: {}\nMessage: {}\nDetail: {}".format(code, message, detail))
     frappe.log_error(
         title="FCM Error", message="{}\n- EXC\nCode: {}\nMessage: {}\nDetail: {}".format(preMessage, code, message, detail))
+
+def huawei_push_kit_error_handler(tokens=None, topic=None, title=None, body=None, data=None, responses=[], recipient_count=1, success_count=0):
+  preMessage = "Tokens: {}\nTopic: {}\nTitle: {}\nBody: {}\nData: {}\n Success/Recipients: {}/{}".format(
+    tokens, topic, title, body, data, success_count, recipient_count)
+  for r in responses:
+    if getattr(r, "success", False):
+      continue
+
+    exc = getattr(r, "exception", r)
+    code = getattr(exc, "code", "no-code")
+    message = getattr(exc, "message", exc)
+    detail = getattr(exc, "detail", "no-details")
+    print(
+      "- EXC\nCode: {}\nMessage: {}\nDetail: {}".format(code, message, detail))
+    frappe.log_error(
+      title="Huawei Push Kit Error",
+      message="{}\n- EXC\nCode: {}\nMessage: {}\nDetail: {}".format(preMessage,
+                                                                    code,
+                                                                    message,
+                                                                    detail))
 
 
 @frappe.whitelist(allow_guest=True)
