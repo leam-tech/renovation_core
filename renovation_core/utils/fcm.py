@@ -318,14 +318,55 @@ def send_fcm_notifications(tokens=None, topic=None, title=None, body=None, data=
 
   return response
 
-def send_huawei_notifications(tokens=None, topic=None, title=None, body=None, data=None):
-  app_id = frappe.get_site_config().get("app_id")
-  if not app_id:
+def get_huawei_auth_token(config):
+  if not config or not config.get('app_id') or not config.get('client_id') or not config.get('client_secret'):
     frappe.log_error(
       title="Huawei Push Kit Error",
-      message="Message: {}".format(frappe._("Missing app id in site config")))
+      message="Message: {}".format(frappe._("Missing secret keys in config")))
     return
-  url = "https://push-api.cloud.huawei.com/v1/{}/messages:send".format(app_id)
+  url = "https://oauth-login.cloud.huawei.com/oauth2/v3/token"
+  headers = {"Content-Type":"application/x-www-form-urlencoded"}
+  payload = {
+    "grant_type": "client_credentials",
+    "client_id":config.get("client_id"),
+    "client_secret":config.get("client_secret")
+  }
+  access_token=''
+  try:
+    response = make_post_request(url, data=payload,
+                                 headers=headers)
+    access_token = "{} {}".format(response.get('token_type'),response.get('access_token'))
+  except Exception as exc:
+    exc = getattr(response, "exception", response)
+    code = getattr(exc, "code", "no-code")
+    message = getattr(exc, "message", exc)
+    detail = getattr(exc, "detail", "no-details")
+    print(
+      "- EXC\nCode: {}\nMessage: {}\nDetail: {}".format(code, message, detail))
+    frappe.log_error(
+      title="Huawei Push Kit Error",
+      message="{}\n- EXC\nCode: {}\nMessage: {}\nDetail: {}".format("Get Authorization token error.",
+                                                                    code,
+                                                                    message,
+                                                                    detail))
+
+  return access_token
+
+
+def send_huawei_notifications(tokens=None, topic=None, title=None, body=None, data=None):
+  config = frappe.get_site_config().get("huawei_push_kit_config")
+  if not config or not config.get('app_id') or not config.get('client_id') or not config.get('client_secret'):
+    frappe.log_error(
+      title="Huawei Push Kit Error",
+      message="Message: {}".format(frappe._("Missing secret keys in config")))
+    return
+  authorization_token = get_huawei_auth_token(config)
+  if not authorization_token:
+    frappe.log_error(
+      title="Huawei Push Kit Error",
+      message="Message: {}".format(frappe._("Authorization token missing.")))
+    return
+  url = "https://push-api.cloud.huawei.com/v1/{}/messages:send".format(config.get('app_id'))
   # message format
   # {
   # data:str ,
@@ -343,7 +384,7 @@ def send_huawei_notifications(tokens=None, topic=None, title=None, body=None, da
     "token":tokens
   }
   response = None
-  headers={"Content-Type": "application/json"}
+  headers={"Content-Type": "application/json", "Authorization": authorization_token}
   if tokens and len(tokens):
     try:
       payload = frappe._dict(validate_only=False, message=message)
