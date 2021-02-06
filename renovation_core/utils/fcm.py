@@ -472,7 +472,18 @@ def huawei_push_kit_error_handler(tokens=None, topic=None, title=None, body=None
     tokens, topic, title, body, data, success_count, recipient_count,failure_count)
   if response.get('code')=='80000000':
     return
-  if response:
+  if isinstance(response,dict):
+    code = response.get('code')
+    message = response.get('msg')
+    print(
+      "- EXC\nCode: {}\nMessage: {}".format(code, message))
+    frappe.log_error(
+      title="Huawei Push Kit Error",
+      message="{}\n- EXC\nCode: {}\nMessage: {}".format(preMessage,
+                                                                    code,
+                                                                    message
+                                                                    ))
+  else:
     exc = getattr(response, "exception", response)
     code = getattr(exc, "code", "no-code")
     message = getattr(exc, "message", exc)
