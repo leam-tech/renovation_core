@@ -168,7 +168,7 @@ def _notify_via_fcm(title, body, data=None, roles=None, users=None, topics=None,
 
   for user in users:
     send_notification_to_user(user, title=title, body=body, data=data)
-    send_notification_to_user(user, title=title, body=body, data=data)
+    send_huawei_notification_to_user(user, title=title, body=body, data=data)
 
   topics = set(topics or [])
   for topic in topics:
@@ -222,7 +222,7 @@ def send_notification_to_user(user, title, body, data=None):
   if response and response.success_count > 0:
     make_communication_doc(data.message_id, title, body, data, user=user)
 
-def _send_huawei_notification_to_user(user, title, body, data=None):
+def send_huawei_notification_to_user(user, title, body, data=None):
   tokens = get_huawei_tokens_for("Users", users=[user])
 
   if not data:
