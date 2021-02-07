@@ -325,7 +325,7 @@ def get_huawei_auth_token(config):
       message="Message: {}".format(frappe._("Missing secret keys in config")))
     return
   url = "https://oauth-login.cloud.huawei.com/oauth2/v3/token"
-  headers = {"Content-Type":"application/x-www-form-urlencoded"}
+  headers = {"Content-Type":"application/x-www-form-urlencoded","Accept":"application/json"}
   payload = {
     "grant_type": "client_credentials",
     "client_id":config.get("client_id"),
@@ -337,17 +337,26 @@ def get_huawei_auth_token(config):
                                  headers=headers)
     access_token = "{} {}".format(response.get('token_type'),response.get('access_token'))
   except Exception as exc:
-    code = getattr(exc, "code", "no-code")
-    message = getattr(exc, "message", exc)
-    detail = getattr(exc, "detail", "no-details")
+    status_code = frappe.flags.integration_request.status_code
+    error = frappe.parse_json(frappe.flags.integration_request.json())
+    huawei_error_code = error.get('error')
+    sub_error =  error.get('sub_error')
+    error_description = error.get('error_description')
     print(
-      "- EXC\nCode: {}\nMessage: {}\nDetail: {}".format(code, message, detail))
+        "{}\nStatus Code: {}\nHuawei Error: {}\nSub Error: {}\nError Description: {}".format(
+            str(exc), status_code,
+            huawei_error_code,
+            sub_error,
+            error_description))
     frappe.log_error(
-      title="Huawei Push Kit Error",
-      message="{}\n- EXC\nCode: {}\nMessage: {}\nDetail: {}".format("Get Authorization token error.",
-                                                                    code,
-                                                                    message,
-                                                                    detail))
+        title="Huawei Push Kit Error",
+        message="{}\n{}\nStatus Code: {}\nHuawei Error: {}\nSub Error: {}\nError Description: {}".format(
+            "Get Authorization token error.",
+            str(exc),
+            status_code,
+            huawei_error_code,
+            sub_error,
+            error_description))
 
   return access_token
 
