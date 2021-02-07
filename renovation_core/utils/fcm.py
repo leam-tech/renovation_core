@@ -318,12 +318,29 @@ def send_fcm_notifications(tokens=None, topic=None, title=None, body=None, data=
 
   return response
 
+def check_redis_cache_for_huawei_auth_token():
+    user = get_default_values_for_redis_key().user
+    key = get_default_values_for_redis_key().key
+    val = frappe.cache().get_value(key,user=user,expires=True)
+    return val
+
+def get_default_values_for_redis_key():
+    return frappe._dict(user='Administrator',key='huawei_auth_token')
+
+def set_redis_cache_huawei_auth_token(auth_token:str, expires_in_sec):
+    user = get_default_values_for_redis_key().user
+    key = get_default_values_for_redis_key().key
+    frappe.cache().set_value(key, auth_token, user=user, expires_in_sec = expires_in_sec-10)
+
 def get_huawei_auth_token(config):
   if not config or not config.get('app_id') or not config.get('client_id') or not config.get('client_secret'):
     frappe.log_error(
       title="Huawei Push Kit Error",
       message="Message: {}".format(frappe._("Missing secret keys in config")))
     return
+  cache_auth_token = check_redis_cache_for_huawei_auth_token()
+  if cache_auth_token:
+      return cache_auth_token
   url = "https://oauth-login.cloud.huawei.com/oauth2/v3/token"
   headers = {"Content-Type":"application/x-www-form-urlencoded","Accept":"application/json"}
   payload = {
@@ -336,6 +353,7 @@ def get_huawei_auth_token(config):
     response = make_post_request(url, data=payload,
                                  headers=headers)
     access_token = "{} {}".format(response.get('token_type'),response.get('access_token'))
+    set_redis_cache_huawei_auth_token(access_token,response.get('expires_in'))
   except Exception as exc:
     status_code = frappe.flags.integration_request.status_code
     error = frappe.parse_json(frappe.flags.integration_request.json())
