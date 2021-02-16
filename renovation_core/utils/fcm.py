@@ -325,7 +325,7 @@ def check_redis_cache_for_huawei_auth_token():
     return val
 
 def get_default_values_for_redis_key():
-    return frappe._dict(user='Administrator',key='huawei_auth_token')
+    return frappe._dict(user='Administrator', key='huawei_auth_token')
 
 def set_redis_cache_huawei_auth_token(auth_token:str, expires_in_sec):
     user = get_default_values_for_redis_key().user
@@ -345,8 +345,8 @@ def get_huawei_auth_token(config):
   headers = {"Content-Type":"application/x-www-form-urlencoded","Accept":"application/json"}
   payload = {
     "grant_type": "client_credentials",
-    "client_id":config.get("client_id"),
-    "client_secret":config.get("client_secret")
+    "client_id": config.get("client_id"),
+    "client_secret": config.get("client_secret")
   }
   access_token=''
   try:
@@ -405,10 +405,19 @@ def send_huawei_notifications(tokens=None, topic=None, title=None, body=None, da
   # condition : '' check docs...
   # }
   message={
-    "data":frappe.as_json(data),
+    "data":frappe.as_json(data) if data else {},
     "notification":{"title":title,"body":body},
-    "token":tokens
+    "android": {
+          "notification": {
+              "click_action": {
+                  "type": 3
+              }
+          }
+      }
   }
+  custom_android_config = frappe.conf.get('android_config')
+  if custom_android_config and isinstance(custom_android_config, dict):
+    message['android'].update(custom_android_config)
   response = None
   headers={"Content-Type": "application/json", "Authorization": authorization_token}
   if tokens and len(tokens):
@@ -418,13 +427,13 @@ def send_huawei_notifications(tokens=None, topic=None, title=None, body=None, da
                                headers=headers)
       huawei_push_kit_error_handler(tokens=tokens, topic=topic, title=title, body=body,
                         data=data,
-                        response=response,
                         recipient_count=len(tokens))
+      message.update({"token": tokens})
     except Exception as exc:
       huawei_push_kit_error_handler(tokens=tokens, topic=topic, title=title,
                                     body=body,
                                     data=data,
-                                    response=exc,
+                                    exc=exc,
                                     recipient_count=len(tokens))
     print("Sending to tokens: {}".format(tokens))
   elif topic:
@@ -434,15 +443,12 @@ def send_huawei_notifications(tokens=None, topic=None, title=None, body=None, da
       response = make_post_request(url, data=frappe.as_json(payload),
                                headers=headers)
       huawei_push_kit_error_handler(tokens=tokens, topic=topic, title=title, body=body,
-                        data=data,
-                        response=response,
-                        recipient_count=len(tokens))
-    except Exception:
+                        data=data)
+    except Exception as exc:
       huawei_push_kit_error_handler(tokens=tokens, topic=topic, title=title,
                                     body=body,
                                     data=data,
-                                    response=response,
-                                    recipient_count=len(tokens))
+                                    exc=exc)
     print("Sent TOPIC {} Msg: {}".format(topic, response))
 
   return response
@@ -520,49 +526,49 @@ def fcm_error_handler(tokens=None, topic=None, title=None, body=None, data=None,
     frappe.log_error(
         title="FCM Error", message="{}\n- EXC\nCode: {}\nMessage: {}\nDetail: {}".format(preMessage, code, message, detail))
 
-def huawei_push_kit_error_handler(tokens=None, topic=None, title=None, body=None, data=None, response=None, recipient_count=1):
+def huawei_push_kit_error_handler(tokens=None, topic=None, title=None, exc=None, body=None, data=None, recipient_count=1):
   # {
   #   "code": "80000000",
   #   "msg": "Success",
   #   "requestId": "157440955549500001002006"
   # }
+  status_code = frappe.flags.integration_request.status_code
+  response = None
+  try:
+    response = frappe.parse_json(frappe.flags.integration_request.json())
+  except Exception as e:
+    pass
+  huawei_error_code = response.get('error') if isinstance(response,dict) else ''
+  sub_error = response.get('sub_error') if isinstance(response,dict) else ''
+  error_description = response.get('error_description') if isinstance(response,dict) else ''
   success_count=0
   failure_count=0
   if isinstance(response,dict) and response.get('code') == '80000000':
     success_count = recipient_count
   elif isinstance(response,dict) and response.get('code') == '80100000':
     msg = frappe.parse_json(response.get('msg'))
-    success_count = msg.get('success')
-    failure_count = msg.get('failure')
+    success_count = msg.get('success', 0)
+    failure_count = msg.get('failure', 0)
     delete_huawei_invalid_tokens(frappe.parse_json(msg.get("illegal_tokens","")))
-  preMessage = "Tokens: {}\nTopic: {}\nTitle: {}\nBody: {}\nData: {}\n Success/Recipients: {}/{} \n Failure:{}".format(
+  preMessage = "Tokens: {}\nTopic: {}\nTitle: {}\nBody: {}\nData: {}\nSuccess/Recipients: {}/{} \nFailure:{}".format(
     tokens, topic, title, body, data, success_count, recipient_count,failure_count)
-  if response.get('code')=='80000000':
+  if response and response.get('code')=='80000000':
     return
-  if isinstance(response,dict):
-    code = response.get('code')
-    message = response.get('msg')
-    print(
-      "- EXC\nCode: {}\nMessage: {}".format(code, message))
-    frappe.log_error(
-      title="Huawei Push Kit Error",
-      message="{}\n- EXC\nCode: {}\nMessage: {}".format(preMessage,
-                                                                    code,
-                                                                    message
-                                                                    ))
-  else:
-    exc = getattr(response, "exception", response)
-    code = getattr(exc, "code", "no-code")
-    message = getattr(exc, "message", exc)
-    detail = getattr(exc, "detail", "no-details")
-    print(
-      "- EXC\nCode: {}\nMessage: {}\nDetail: {}".format(code, message, detail))
-    frappe.log_error(
-      title="Huawei Push Kit Error",
-      message="{}\n- EXC\nCode: {}\nMessage: {}\nDetail: {}".format(preMessage,
-                                                                    code,
-                                                                    message,
-                                                                    detail))
+  code = response.get('code') if isinstance(response,dict) else ''
+  message = response.get('msg') if isinstance(response,dict) else ''
+  print(
+    "- EXC\nCode: {}\nMessage: {}".format(code, message))
+  frappe.log_error(
+    title="Huawei Push Kit Error",
+    message="{}\nEXC: {}\nCode: {}\nMessage: {}\nStatus Code: {}\nHuawei Error Code: {}\nSub Error: {}\nError Description: {}".format(preMessage,
+                                                                  str(exc),
+                                                                  code,
+                                                                  message,
+                                                                  status_code,
+                                                                  huawei_error_code,
+                                                                  sub_error,
+                                                                  error_description
+                                                                  ))
 
 
 @frappe.whitelist(allow_guest=True)
