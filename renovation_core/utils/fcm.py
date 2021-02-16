@@ -234,7 +234,7 @@ def send_huawei_notification_to_user(user, title, body, data=None):
   # Batch Response
   response = send_huawei_notifications(
       tokens=tokens, title=title, body=body, data=data)
-  if response and response.success_count > 0:
+  if response:
     make_communication_doc(data.message_id, title, body, data, user=user)
 
 
