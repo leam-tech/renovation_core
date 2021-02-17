@@ -421,20 +421,22 @@ def send_huawei_notifications(tokens=None, topic=None, title=None, body=None, da
   response = None
   headers={"Content-Type": "application/json", "Authorization": authorization_token}
   if tokens and len(tokens):
+    message.update({"token": tokens})
     try:
       payload = frappe._dict(validate_only=False, message=message)
       response = make_post_request(url, data=frappe.as_json(payload),
                                headers=headers)
       huawei_push_kit_error_handler(tokens=tokens, topic=topic, title=title, body=body,
                         data=data,
-                        recipient_count=len(tokens))
-      message.update({"token": tokens})
+                        recipient_count=len(tokens),
+                        request_params=message)
     except Exception as exc:
       huawei_push_kit_error_handler(tokens=tokens, topic=topic, title=title,
                                     body=body,
                                     data=data,
                                     exc=exc,
-                                    recipient_count=len(tokens))
+                                    recipient_count=len(tokens),
+                                    request_params=message)
     print("Sending to tokens: {}".format(tokens))
   elif topic:
     message.update({"topic":topic})
@@ -443,12 +445,14 @@ def send_huawei_notifications(tokens=None, topic=None, title=None, body=None, da
       response = make_post_request(url, data=frappe.as_json(payload),
                                headers=headers)
       huawei_push_kit_error_handler(tokens=tokens, topic=topic, title=title, body=body,
-                        data=data)
+                        data=data,
+                        request_params=message)
     except Exception as exc:
       huawei_push_kit_error_handler(tokens=tokens, topic=topic, title=title,
                                     body=body,
                                     data=data,
-                                    exc=exc)
+                                    exc=exc,
+                                    request_params=message                                    )
     print("Sent TOPIC {} Msg: {}".format(topic, response))
 
   return response
@@ -526,7 +530,7 @@ def fcm_error_handler(tokens=None, topic=None, title=None, body=None, data=None,
     frappe.log_error(
         title="FCM Error", message="{}\n- EXC\nCode: {}\nMessage: {}\nDetail: {}".format(preMessage, code, message, detail))
 
-def huawei_push_kit_error_handler(tokens=None, topic=None, title=None, exc=None, body=None, data=None, recipient_count=1):
+def huawei_push_kit_error_handler(tokens=None, topic=None, title=None, exc=None, body=None, data=None, recipient_count=1, request_params = None):
   # {
   #   "code": "80000000",
   #   "msg": "Success",
@@ -560,14 +564,15 @@ def huawei_push_kit_error_handler(tokens=None, topic=None, title=None, exc=None,
     "- EXC\nCode: {}\nMessage: {}".format(code, message))
   frappe.log_error(
     title="Huawei Push Kit Error",
-    message="{}\nEXC: {}\nCode: {}\nMessage: {}\nStatus Code: {}\nHuawei Error Code: {}\nSub Error: {}\nError Description: {}".format(preMessage,
+    message="{}\nEXC: {}\nCode: {}\nMessage: {}\nStatus Code: {}\nHuawei Error Code: {}\nSub Error: {}\nError Description: {}\n Request Params: {}".format(preMessage,
                                                                   str(exc),
                                                                   code,
                                                                   message,
                                                                   status_code,
                                                                   huawei_error_code,
                                                                   sub_error,
-                                                                  error_description
+                                                                  error_description,
+                                                                  request_params
                                                                   ))
 
 
