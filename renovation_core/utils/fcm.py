@@ -247,7 +247,7 @@ def make_communication_doc(message_id, title, body, data, user=None, topic=None)
 
   doc = frappe.get_doc({
       "message_id": data.message_id,
-      "subject": "FCM {} {}".format(user or topic, title or ""),
+      "subject": "{} {} {}".format("FCM" if 'FCM' in message_id else "HCM" , user or topic, title or ""),
       "doctype": "Communication",
       "communication_medium": "FCM",
       "sent_or_received": "Sent",
