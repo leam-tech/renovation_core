@@ -54,6 +54,10 @@ def send_via_fcm(notification, doc, context):
 
   body = strip_html_tags(frappe.render_template(notification.message, context))
   data = frappe.render_template(notification.fcm_data, context)
+  custom_android_configuration = None
+  if notification.get('custom_android_configuration') and notification.get('send_via_hcm'):
+    custom_android_configuration = strip_html_tags(frappe.render_template(notification.get('custom_android_configuration'),context))
+
 
   # literal_eval supports dict parsing
   if data:
@@ -91,13 +95,13 @@ def send_via_fcm(notification, doc, context):
         else:
           _title = _(title, lang)
           _body = _(body, lang)
-      notify_via_fcm(title=_title, body=_body, data=data, users=[user])
+      notify_via_fcm(title=_title, body=_body, data=data, users=[user], send_via_hcm=notification.get('send_via_hcm') ,custom_android_configuration=custom_android_configuration)
 
   if recipients.topics and len(recipients.topics):
-    notify_via_fcm(title=title, body=body, data=data, topics=recipients.topics)
+    notify_via_fcm(title=title, body=body, data=data, topics=recipients.topics, send_via_hcm=notification.get('send_via_hcm') ,custom_android_configuration=custom_android_configuration)
 
   if recipients.tokens and len(recipients.tokens):
-    notify_via_fcm(title=title, body=body, data=data, tokens=recipients.tokens)
+    notify_via_fcm(title=title, body=body, data=data, tokens=recipients.tokens, send_via_hcm=notification.get('send_via_hcm') ,custom_android_configuration=custom_android_configuration)
 
 
 def get_fcm_recipients(notification, context):

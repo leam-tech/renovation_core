@@ -146,12 +146,12 @@ def _delete_user_token(user, token):
   frappe.delete_doc("FCM User Token", t, ignore_permissions=True)
 
 
-def notify_via_fcm(title, body, data=None, roles=None, users=None, topics=None, tokens=None):
+def notify_via_fcm(title, body, data=None, roles=None, users=None, topics=None, tokens=None, send_via_hcm=False, custom_android_configuration=None):
   frappe.enqueue("renovation_core.utils.fcm._notify_via_fcm", enqueue_after_commit=True,
-                 title=title, body=body, data=data, roles=roles, users=users, topics=topics, tokens=tokens)
+                 title=title, body=body, data=data, roles=roles, users=users, topics=topics, tokens=tokens, send_via_hcm=send_via_hcm, custom_android_configuration=custom_android_configuration)
 
 
-def _notify_via_fcm(title, body, data=None, roles=None, users=None, topics=None, tokens=None):
+def _notify_via_fcm(title, body, data=None, roles=None, users=None, topics=None, tokens=None, send_via_hcm=False, custom_android_configuration=None):
 
   users = set(users or [])
   if roles:
@@ -168,17 +168,20 @@ def _notify_via_fcm(title, body, data=None, roles=None, users=None, topics=None,
 
   for user in users:
     send_notification_to_user(user, title=title, body=body, data=data)
-    send_huawei_notification_to_user(user, title=title, body=body, data=data)
+    if send_via_hcm:
+        send_huawei_notification_to_user(user, title=title, body=body, data=data, custom_android_configuration=custom_android_configuration)
 
   topics = set(topics or [])
   for topic in topics:
     send_notification_to_topic(topic=topic, title=title, body=body, data=data)
-    send_huawei_notification_to_topic(topic=topic, title=title, body=body, data=data)
+    if send_via_hcm:
+        send_huawei_notification_to_topic(topic=topic, title=title, body=body, data=data, custom_android_configuration=custom_android_configuration)
 
   tokens = set(tokens or [])
   if len(tokens):
     send_fcm_notifications(list(tokens), title=title, body=body, data=data)
-    send_huawei_notifications(list(tokens), title=title, body=body, data=data)
+    if send_via_hcm:
+        send_huawei_notifications(list(tokens), title=title, body=body, data=data, custom_android_configuration=custom_android_configuration)
 
 
 
@@ -194,7 +197,7 @@ def send_notification_to_topic(topic, title, body, data=None):
   if response:
     make_communication_doc(data.message_id, title, body, data, topic=topic)
 
-def send_huawei_notification_to_topic(topic, title, body, data=None):
+def send_huawei_notification_to_topic(topic, title, body, data=None, custom_android_configuration=None):
   if not data:
     data = frappe._dict({})
 
@@ -202,7 +205,7 @@ def send_huawei_notification_to_topic(topic, title, body, data=None):
                                        make_autoname("hash", "Communication"))
   # Message id response
   response = send_huawei_notifications(
-      topic=topic, title=title, body=body, data=data)
+      topic=topic, title=title, body=body, data=data, custom_android_configuration=custom_android_configuration)
   if response:
     make_communication_doc(data.message_id, title, body, data, topic=topic)
 
@@ -222,7 +225,7 @@ def send_notification_to_user(user, title, body, data=None):
   if response and response.success_count > 0:
     make_communication_doc(data.message_id, title, body, data, user=user)
 
-def send_huawei_notification_to_user(user, title, body, data=None):
+def send_huawei_notification_to_user(user, title, body, data=None, custom_android_configuration=None):
   tokens = get_huawei_tokens_for("Users", users=[user])
 
   if not data:
@@ -233,7 +236,7 @@ def send_huawei_notification_to_user(user, title, body, data=None):
 
   # Batch Response
   response = send_huawei_notifications(
-      tokens=tokens, title=title, body=body, data=data)
+      tokens=tokens, title=title, body=body, data=data, custom_android_configuration=custom_android_configuration)
   if response:
     make_communication_doc(data.message_id, title, body, data, user=user)
 
@@ -378,8 +381,7 @@ def get_huawei_auth_token(config):
 
   return access_token
 
-
-def send_huawei_notifications(tokens=None, topic=None, title=None, body=None, data=None):
+def send_huawei_notifications(tokens=None, topic=None, title=None, body=None, data=None, custom_android_configuration=None):
   config = frappe.get_site_config().get("huawei_push_kit_config")
   if not config or not config.get('app_id') or not config.get('client_id') or not config.get('client_secret'):
     frappe.log_error(
@@ -415,9 +417,8 @@ def send_huawei_notifications(tokens=None, topic=None, title=None, body=None, da
           }
       }
   }
-  custom_android_config = frappe.conf.get('android_config')
-  if custom_android_config and isinstance(custom_android_config, dict):
-    message['android'].update(custom_android_config)
+  if custom_android_configuration and isinstance(custom_android_configuration, dict):
+    message['android'].update(custom_android_configuration)
   response = None
   headers={"Content-Type": "application/json", "Authorization": authorization_token}
   if tokens and len(tokens):
