@@ -29,7 +29,7 @@ fixtures = [
     },
     {
         "dt": "Renovation Script",
-        "filters": [["name", "IN", ["Data Import", "Data Export", "Broadcast Message RScript"]]]
+        "filters": [["name", "IN", ["Data Import Legacy", "Data Export", "Broadcast Message RScript"]]]
     },
     {
         "dt": "Email Template",
