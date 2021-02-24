@@ -158,9 +158,6 @@ def _notify_via_fcm(title, body, data=None, roles=None, users=None, topics=None,
     users.union(set([x.parent for x in frappe.db.get_all("Has Role", fields=[
                 "distinct parent"], filters={"role": ["IN", roles or []]})]))
 
-  if custom_android_configuration:
-      custom_android_configuration = frappe.render_template(custom_android_configuration, {})
-
   if data == None:
     data = frappe._dict()
 
