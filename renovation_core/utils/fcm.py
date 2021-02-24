@@ -146,12 +146,12 @@ def _delete_user_token(user, token):
   frappe.delete_doc("FCM User Token", t, ignore_permissions=True)
 
 
-def notify_via_fcm(title, body, data=None, roles=None, users=None, topics=None, tokens=None, send_via_hcm=False, custom_android_configuration=None):
+def notify_via_fcm(title, body, data=None, roles=None, users=None, topics=None, tokens=None, send_via_hpk=False, custom_android_configuration=None):
   frappe.enqueue("renovation_core.utils.fcm._notify_via_fcm", enqueue_after_commit=True,
-                 title=title, body=body, data=data, roles=roles, users=users, topics=topics, tokens=tokens, send_via_hcm=send_via_hcm, custom_android_configuration=custom_android_configuration)
+                 title=title, body=body, data=data, roles=roles, users=users, topics=topics, tokens=tokens, send_via_hpk=send_via_hpk, custom_android_configuration=custom_android_configuration)
 
 
-def _notify_via_fcm(title, body, data=None, roles=None, users=None, topics=None, tokens=None, send_via_hcm=False, custom_android_configuration=None):
+def _notify_via_fcm(title, body, data=None, roles=None, users=None, topics=None, tokens=None, send_via_hpk=False, custom_android_configuration=None):
 
   users = set(users or [])
   if roles:
@@ -168,19 +168,19 @@ def _notify_via_fcm(title, body, data=None, roles=None, users=None, topics=None,
 
   for user in users:
     send_notification_to_user(user, title=title, body=body, data=data)
-    if cint(send_via_hcm):
+    if cint(send_via_hpk):
         send_huawei_notification_to_user(user, title=title, body=body, data=data, custom_android_configuration=custom_android_configuration)
 
   topics = set(topics or [])
   for topic in topics:
     send_notification_to_topic(topic=topic, title=title, body=body, data=data)
-    if cint(send_via_hcm):
+    if cint(send_via_hpk):
         send_huawei_notification_to_topic(topic=topic, title=title, body=body, data=data, custom_android_configuration=custom_android_configuration)
 
   tokens = set(tokens or [])
   if len(tokens):
     send_fcm_notifications(list(tokens), title=title, body=body, data=data)
-    if cint(send_via_hcm):
+    if cint(send_via_hpk):
         send_huawei_notifications(list(tokens), title=title, body=body, data=data, custom_android_configuration=custom_android_configuration)
 
 
@@ -250,7 +250,7 @@ def make_communication_doc(message_id, title, body, data, user=None, topic=None)
 
   doc = frappe.get_doc({
       "message_id": data.message_id,
-      "subject": "{} {} {}".format("FCM" if 'FCM' in message_id else "HCM" , user or topic, title or ""),
+      "subject": "{} {} {}".format("FCM" if 'FCM' in message_id else "HPK" , user or topic, title or ""),
       "doctype": "Communication",
       "communication_medium": "FCM",
       "sent_or_received": "Sent",
