@@ -5,7 +5,7 @@ import frappe
 import six
 from frappe import _
 from frappe.email.doctype.notification.notification import get_context
-from frappe.utils import strip_html_tags, strip_html
+from frappe.utils import strip_html_tags, strip_html, cint
 
 from .fcm import notify_via_fcm
 from .sms_setting import get_sms_recipients_for_notification, send_sms
@@ -55,8 +55,8 @@ def send_via_fcm(notification, doc, context):
   body = strip_html_tags(frappe.render_template(notification.message, context))
   data = frappe.render_template(notification.fcm_data, context)
   custom_android_configuration = None
-  if notification.get('custom_android_configuration') and notification.get('send_via_hcm'):
-    custom_android_configuration = strip_html_tags(frappe.render_template(notification.get('custom_android_configuration'),context))
+  if notification.get('custom_android_configuration') and cint(notification.get('send_via_hcm')):
+    custom_android_configuration = frappe.parse_json(strip_html_tags(frappe.render_template(notification.get('custom_android_configuration'), context)))
 
 
   # literal_eval supports dict parsing

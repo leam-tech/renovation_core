@@ -168,19 +168,19 @@ def _notify_via_fcm(title, body, data=None, roles=None, users=None, topics=None,
 
   for user in users:
     send_notification_to_user(user, title=title, body=body, data=data)
-    if send_via_hcm:
+    if cint(send_via_hcm):
         send_huawei_notification_to_user(user, title=title, body=body, data=data, custom_android_configuration=custom_android_configuration)
 
   topics = set(topics or [])
   for topic in topics:
     send_notification_to_topic(topic=topic, title=title, body=body, data=data)
-    if send_via_hcm:
+    if cint(send_via_hcm):
         send_huawei_notification_to_topic(topic=topic, title=title, body=body, data=data, custom_android_configuration=custom_android_configuration)
 
   tokens = set(tokens or [])
   if len(tokens):
     send_fcm_notifications(list(tokens), title=title, body=body, data=data)
-    if send_via_hcm:
+    if cint(send_via_hcm):
         send_huawei_notifications(list(tokens), title=title, body=body, data=data, custom_android_configuration=custom_android_configuration)
 
 
