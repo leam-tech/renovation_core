@@ -42,6 +42,8 @@ def application(request):
       response = frappe.utils.response.download_backup(request.path)
 
     elif frappe.request.path.startswith('/private/files/'):
+      from frappe.api import validate_auth
+      validate_auth()
       response = frappe.utils.response.download_private_file(request.path)
 
     elif frappe.local.request.method in ('GET', 'HEAD', 'POST'):
