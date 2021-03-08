@@ -8,6 +8,7 @@ from frappe.email.doctype.notification.notification import get_context
 from frappe.utils import strip_html_tags, strip_html, cint
 
 from .fcm import notify_via_fcm
+from .hpk import notify_via_hpk
 from .sms_setting import get_sms_recipients_for_notification, send_sms
 
 """
@@ -95,13 +96,24 @@ def send_via_fcm(notification, doc, context):
         else:
           _title = _(title, lang)
           _body = _(body, lang)
-      notify_via_fcm(title=_title, body=_body, data=data, users=[user], send_via_hpk=notification.get('send_via_hpk') ,custom_android_configuration=custom_android_configuration)
+      notify_via_fcm(title=_title, body=_body, data=data, users=[user])
+      if cint(notification.get('send_via_hpk')):
+        notify_via_hpk(title=_title, body=_body, data=data, users=[user],
+                       custom_android_configuration=custom_android_configuration)
 
   if recipients.topics and len(recipients.topics):
-    notify_via_fcm(title=title, body=body, data=data, topics=recipients.topics, send_via_hpk=notification.get('send_via_hpk') ,custom_android_configuration=custom_android_configuration)
+    notify_via_fcm(title=title, body=body, data=data, topics=recipients.topics)
+    if cint(notification.get('send_via_hpk')):
+      notify_via_hpk(title=title, body=body, data=data,
+                     topics=recipients.topics,
+                     custom_android_configuration=custom_android_configuration)
 
   if recipients.tokens and len(recipients.tokens):
-    notify_via_fcm(title=title, body=body, data=data, tokens=recipients.tokens, send_via_hpk=notification.get('send_via_hpk') ,custom_android_configuration=custom_android_configuration)
+    notify_via_fcm(title=title, body=body, data=data, tokens=recipients.tokens)
+    if cint(notification.get('send_via_hpk')):
+      notify_via_hpk(title=title, body=body, data=data,
+                     tokens=recipients.tokens,
+                     custom_android_configuration=custom_android_configuration)
 
 
 def get_fcm_recipients(notification, context):
