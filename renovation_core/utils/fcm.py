@@ -34,7 +34,7 @@ def get_firebase_certificate():
 
 
 @frappe.whitelist(allow_guest=True)
-def register_client(token, user=None):
+def register_client(token, user=None, is_huawei_token=False):
   if not user:
     user = frappe.session.user if frappe.session else "Guest"
 
@@ -50,7 +50,7 @@ def register_client(token, user=None):
   if is_valid_session_id(frappe.session.sid):
     linked_sid = frappe.session.sid
 
-  _add_user_token(user=user, token=token, linked_sid=linked_sid)
+  _add_user_token(user=user, token=token, linked_sid=linked_sid, is_huawei_token=is_huawei_token)
   return "OK"
 
 
@@ -88,23 +88,25 @@ def get_client_tokens(user=None):
 
   return tokens
 
-
-def _add_user_token(user, token, linked_sid=None):
+def _add_user_token(user, token, linked_sid=None, is_huawei_token=False):
+  dt = "FCM User Token"
+  if is_huawei_token:
+    dt = "Huawei User Token"
   _existing = frappe.db.get_value(
-    "FCM User Token",
+    dt,
     {"token": token},
     ["name", "user"],
     as_dict=1
   )
   if _existing:
     if _existing.user != user:
-      frappe.delete_doc("FCM User Token", _existing.name, force=1, ignore_permissions=True)
+      frappe.delete_doc(dt, _existing.name, force=1, ignore_permissions=True)
     else:
-      frappe.db.set_value("FCM User Token", _existing.name, "last_updated", now())
-      return frappe.get_doc("FCM User Token", _existing.name)
+      frappe.db.set_value(dt, _existing.name, "last_updated", now())
+      return frappe.get_doc(dt, _existing.name)
 
   d = frappe.get_doc(frappe._dict(
-      doctype="FCM User Token",
+      doctype=dt,
       user=user,
       token=token,
       linked_sid=linked_sid,
@@ -113,8 +115,10 @@ def _add_user_token(user, token, linked_sid=None):
   d.insert(ignore_permissions=True)
   return d
 
-
 def _delete_user_token(user, token):
+  ht = frappe.db.get_value("Huawei User Token", {"token": token, "user": user})
+  if ht:
+    frappe.delete_doc("Huawei User Token", ht, ignore_permissions=True)
   t = frappe.db.get_value("FCM User Token", {"token": token, "user": user})
   if not t:
     return
@@ -153,7 +157,6 @@ def _notify_via_fcm(title, body, data=None, roles=None, users=None, topics=None,
   if len(tokens):
     send_fcm_notifications(list(tokens), title=title, body=body, data=data)
 
-
 def send_notification_to_topic(topic, title, body, data=None):
   if not data:
     data = frappe._dict({})
@@ -165,7 +168,6 @@ def send_notification_to_topic(topic, title, body, data=None):
       topic=topic, title=title, body=body, data=data)
   if response:
     make_communication_doc(data.message_id, title, body, data, topic=topic)
-
 
 def send_notification_to_user(user, title, body, data=None):
   tokens = get_tokens_for("Users", users=[user])
@@ -182,7 +184,6 @@ def send_notification_to_user(user, title, body, data=None):
   if response and response.success_count > 0:
     make_communication_doc(data.message_id, title, body, data, user=user)
 
-
 def make_communication_doc(message_id, title, body, data, user=None, topic=None):
   notification_str = json.dumps({
       "title": title or "",
@@ -192,7 +193,7 @@ def make_communication_doc(message_id, title, body, data, user=None, topic=None)
 
   doc = frappe.get_doc({
       "message_id": data.message_id,
-      "subject": "FCM {} {}".format(user or topic, title or ""),
+      "subject": "{} {} {}".format("FCM" if 'FCM' in message_id else "HPK" , user or topic, title or ""),
       "doctype": "Communication",
       "communication_medium": "FCM",
       "sent_or_received": "Sent",
@@ -217,7 +218,6 @@ def get_tokens_for(target, roles=None, users=None):
     tokens.extend(get_client_tokens(user=u))
 
   return [x for x in tokens if len(x) > 0]
-
 
 def send_fcm_notifications(tokens=None, topic=None, title=None, body=None, data=None):
   global firebase_app
@@ -247,7 +247,6 @@ def send_fcm_notifications(tokens=None, topic=None, title=None, body=None, data=
                       responses=response.responses, recipient_count=1, success_count=0)
 
   return response
-
 
 def delete_invalid_tokens(tokens, responses):
   """
@@ -314,7 +313,6 @@ def fcm_error_handler(tokens=None, topic=None, title=None, body=None, data=None,
     print("- EXC\nCode: {}\nMessage: {}\nDetail: {}".format(code, message, detail))
     frappe.log_error(
         title="FCM Error", message="{}\n- EXC\nCode: {}\nMessage: {}\nDetail: {}".format(preMessage, code, message, detail))
-
 
 @frappe.whitelist(allow_guest=True)
 def get_user_notifications(limit_start=0, limit_page_length=20, _user=None, just_unseen=None, filters=None):
