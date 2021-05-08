@@ -123,7 +123,7 @@ def get_doc_translations(doctype, name):
     if t.context.count(":") > 1:
       # Docfield translation
       fieldname = t.context.split(":")[2]
-      if doc.get(fieldname) == t.source_text:
+      if t.source_text == "*" or doc.get(fieldname) == t.source_text:
         tr_dict[t.language][fieldname] = t.translated_text
     else:
       # Document Translation
