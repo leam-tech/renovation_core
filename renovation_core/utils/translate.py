@@ -74,7 +74,33 @@ def add_translation(
 
 @frappe.whitelist(allow_guest=True)
 def get_doc_translations(doctype, name):
-  context = f"{doctype}:{name}"
+  """
+  Returns a dict custom tailored for the document.
+
+  - Translations with the following contexts are handled:
+    - doctype:name:docfield
+    - doctype:name
+    - doctype:docfield (Select fields only)
+  - 'Select' docfields will have a values dict which will have
+    translations for each option
+
+  document(doctype, name) {
+    [lang_code_1]: {
+      title: lang_1_title,
+      status: {
+        value: lang_1_status,
+        values: {
+          option_1: lang_1_option_1,
+          ...
+        }
+      }
+    },
+    [lang_code_2]: {
+      title: lang_2_title,
+    }
+  }
+  """
+  context = f"{doctype}:"
 
   translations = frappe.db.sql("""
   SELECT
@@ -120,13 +146,29 @@ def get_doc_translations(doctype, name):
     if t.language not in tr_dict:
       tr_dict[t.language] = frappe._dict()
 
-    if t.context.count(":") > 1:
+    ctx = t.context.split(":")
+    if len(ctx) == 3 and ctx[1] == name:
       # Docfield translation
+      # doctype:name:docfield
       fieldname = t.context.split(":")[2]
       if t.source_text == "*" or doc.get(fieldname) == t.source_text:
         tr_dict[t.language][fieldname] = t.translated_text
-    else:
+
+    elif len(ctx) == 2 and ctx[1] != name:
+      # Select DocField
+      select_df = ctx[1]
+      if select_df not in [x.fieldname for x in frappe.get_meta(doctype).get_select_fields()]:
+        continue
+
+      select_tr = tr_dict[t.language].setdefault(
+          select_df, frappe._dict(value=None, values=frappe._dict()))
+      select_tr.get("values")[t.source_text] = t.translated_text
+      if doc.get(select_df) == t.source_text:
+        select_tr.value = t.translated_text
+
+    elif len(ctx) == 2:
       # Document Translation
+      # doctype:name
       d = get_value_fieldname_dict()
       if t.source_text in d:
         for fieldname in d[t.source_text]:
