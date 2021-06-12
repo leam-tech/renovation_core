@@ -12,7 +12,7 @@ from .utils.notification import send_notification
 from .utils.sms_setting import validate_receiver_nos
 from .utils.sync import _get_doc_files, process
 
-__version__ = '1.6.1'
+__version__ = '1.6.2'
 
 Meta.process = process
 frappe.model.sync.get_doc_files = _get_doc_files
