@@ -31,8 +31,8 @@ def update_supervisor():
     if not supervisor_config:
       frappe.throw("Invalid supervisor config file")
 
-    supervisor_config = supervisor_config.replace(
-        "frappe.app:application", "renovation_core.app:application")
+    # supervisor_config = supervisor_config.replace(
+    #     "frappe.app:application", "renovation_core.app:application")
     supervisor_config = supervisor_config.replace(
         "apps/frappe/socketio.js", "apps/renovation_core/socketio.js")
 
@@ -58,7 +58,7 @@ def update_procfile():
 
     proc = proc.replace("apps/frappe/socketio.js",
                         "apps/renovation_core/socketio.js")
-    proc = proc.replace("bench serve", "bench renovation serve")
+    # proc = proc.replace("bench serve", "bench renovation serve")
 
     f.seek(0)
     f.write(proc)
