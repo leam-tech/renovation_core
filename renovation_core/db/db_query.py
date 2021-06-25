@@ -7,7 +7,7 @@ from six import string_types
 
 
 class UpdatedDBQuery(DatabaseQuery):
-  def execute(self, query=None, fields=None, filters=None, or_filters=None,
+  def execute(self, fields=None, filters=None, or_filters=None,
               docstatus=None, group_by=None, order_by=None, limit_start=False,
               limit_page_length=None, as_list=False, with_childnames=False, debug=False,
               ignore_permissions=False, user=None, with_comment_count=False,
@@ -39,7 +39,7 @@ class UpdatedDBQuery(DatabaseQuery):
             with_link_fields) if with_link_fields.startswith('[') else [with_link_fields]
       else:
         self.with_link_fields = with_link_fields
-    _d = super(UpdatedDBQuery, self).execute(query=query, fields=fields, filters=filters, or_filters=or_filters,
+    _d = super(UpdatedDBQuery, self).execute(fields=fields, filters=filters, or_filters=or_filters,
                                              docstatus=docstatus, group_by=group_by, order_by=order_by,
                                              limit_start=limit_start,
                                              limit_page_length=limit_page_length, as_list=as_list,
@@ -100,4 +100,4 @@ class UpdatedDBQuery(DatabaseQuery):
 def get_list(doctype, *args, **kwargs):
   '''wrapper for DatabaseQuery'''
   kwargs.pop('cmd', None)
-  return UpdatedDBQuery(doctype).execute(None, *args, **kwargs)
+  return UpdatedDBQuery(doctype).execute(*args, **kwargs)
