@@ -1,4 +1,5 @@
 {
+ "actions": [],
  "creation": "2020-05-21 11:56:26.380960",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -30,8 +31,7 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Target DocType",
-   "options": "DocType",
-   "reqd": 1
+   "options": "DocType"
   },
   {
    "fieldname": "target_docname",
@@ -43,11 +43,11 @@
    "fieldname": "target_fieldname",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Target Fieldname",
-   "reqd": 1
+   "label": "Target Fieldname"
   }
  ],
- "modified": "2020-05-27 14:50:58.145302",
+ "links": [],
+ "modified": "2021-06-26 13:11:48.144084",
  "modified_by": "Administrator",
  "module": "Renovation Core",
  "name": "Temporary File",

@@ -3,9 +3,9 @@ import frappe
 """
 Temporary File {
   file: Attach
-  target_doctype: Link/DocType
-  target_docname: DynamicLink/target_doctype
-  target_fieldname: Data
+  target_doctype?: Link/DocType
+  target_docname?: DynamicLink/target_doctype
+  target_fieldname?: Data
 }
 """
 
@@ -39,6 +39,8 @@ def file_exists(dt, dn, df, file):
   :param df: The fieldname to check in
   :param file: the file_url to check for
   """
+  if not dt or not dn:
+    return False
   r = frappe.db.sql("""
     SELECT
       d.name
