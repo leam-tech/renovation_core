@@ -44,11 +44,16 @@ def send_sms(receiver_list, msg, sender_name='', success_msg=True, provider=None
       'success_msg': success_msg
   }
   if not provider:
-    provider = get_default_sms_providers()
+    providers = get_default_sms_providers()
   elif isinstance(provider, string_types):
-    provider = [{"provider": provider, "country": x.country, "code": x.code.lower()} for x in (
+    providers = [{"provider": provider, "country": x.country, "code": x.code.lower()} for x in (
         frappe.get_cached_doc("SMS Provider", provider).get("countries") or [])]
-  if provider:
+    if not len(providers):
+      providers = [{"provider": provider, "country": "all", "code": "all"}]
+  else:
+    providers = provider
+
+  if providers:
     return send_via_gateway(arg, providers=provider)
   else:
     frappe.throw(_("Please Update SMS Settings"))
