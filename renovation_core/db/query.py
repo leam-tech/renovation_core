@@ -49,7 +49,7 @@ def get_list_with_child(doctype, *args, **kwargs):
     del kwargs["table_fields"]
 
     ret = []
-    for m in UpdatedDBQuery(doctype).execute(None, *args, **kwargs):
+    for m in UpdatedDBQuery(doctype).execute(*args, **kwargs):
       for fieldname, fields in table_fields.items():
         child_dt = get_child_dt(doctype, fieldname)
         m[fieldname] = frappe.get_list(child_dt, filters={
@@ -58,4 +58,4 @@ def get_list_with_child(doctype, *args, **kwargs):
 
     return ret
   else:
-    return UpdatedDBQuery(doctype).execute(None, *args, **kwargs)
+    return UpdatedDBQuery(doctype).execute(*args, **kwargs)
