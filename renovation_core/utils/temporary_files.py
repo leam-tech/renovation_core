@@ -66,7 +66,7 @@ def temp_file_expired(temp_file):
   """
   from frappe.utils import add_to_date, cint, now_datetime
 
-  if add_to_date(temp_file.creation, hours=cint(temp_file.expires_in_hours) or 5) >= now_datetime():
+  if add_to_date(temp_file.creation, hours=cint(temp_file.expires_in_hours) or 5) <= now_datetime():
     return True
 
   return False
