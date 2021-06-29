@@ -147,13 +147,6 @@ doc_events = {
 
 # Scheduled Tasks
 # ---------------
-
-scheduler_events = {
-    "hourly": [
-        "renovation_core.utils.temporary_files.flush_files"
-    ]
-}
-
 scheduler_events = {
     # 	"all": [
     # 		"renovation_core.tasks.all"
@@ -167,6 +160,9 @@ scheduler_events = {
     # 	"weekly": [
     # 		"renovation_core.tasks.weekly"
     # 	]
+    "hourly": [
+        "renovation_core.utils.temporary_files.flush_files"
+    ],
     "monthly": [
         "renovation_core.tasks.generate_apple_client_secret"
     ]

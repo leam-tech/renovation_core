@@ -36,7 +36,10 @@ class TemporaryFile(Document):
     Validate if the fieldname specified is actually an Attach/Attach Image field in the target_doctype
     """
     if not self.target_fieldname:
-      frappe.throw("Target DF is mandatory")
+      if self.target_doctype:
+        frappe.throw(frappe._("Target fieldname is mandatory when specifying target doctype"))
+      return
+
     m = frappe.get_meta(self.target_doctype)
     df = m.get_field(self.target_fieldname)
     if not df:
@@ -44,4 +47,4 @@ class TemporaryFile(Document):
           self.target_fieldname, self.target_doctype))
 
     if df.fieldtype not in ("Attach", "Attach Image"):
-      frappe.throw("{} is not an attachment field".format(df.fieldname))	
+      frappe.throw("{} is not an attachment field".format(df.fieldname))

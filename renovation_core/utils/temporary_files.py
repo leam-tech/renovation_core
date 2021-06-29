@@ -3,9 +3,9 @@ import frappe
 """
 Temporary File {
   file: Attach
-  target_doctype: Link/DocType
-  target_docname: DynamicLink/target_doctype
-  target_fieldname: Data
+  target_doctype?: Link/DocType
+  target_docname?: DynamicLink/target_doctype
+  target_fieldname?: Data
 }
 """
 
@@ -39,6 +39,8 @@ def file_exists(dt, dn, df, file):
   :param df: The fieldname to check in
   :param file: the file_url to check for
   """
+  if not dt or not dn:
+    return False
   r = frappe.db.sql("""
     SELECT
       d.name
@@ -64,7 +66,7 @@ def temp_file_expired(temp_file):
   """
   from frappe.utils import add_to_date, cint, now_datetime
 
-  if add_to_date(temp_file.creation, hours=cint(temp_file.expires_in_hours) or 5) >= now_datetime():
+  if add_to_date(temp_file.creation, hours=cint(temp_file.expires_in_hours) or 5) <= now_datetime():
     return True
 
   return False
