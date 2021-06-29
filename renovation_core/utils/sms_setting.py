@@ -54,7 +54,7 @@ def send_sms(receiver_list, msg, sender_name='', success_msg=True, provider=None
     providers = provider
 
   if providers:
-    return send_via_gateway(arg, providers=provider)
+    return send_via_gateway(arg, providers=providers)
   else:
     frappe.throw(_("Please Update SMS Settings"))
 
