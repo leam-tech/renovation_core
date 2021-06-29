@@ -44,13 +44,17 @@ def send_sms(receiver_list, msg, sender_name='', success_msg=True, provider=None
       'success_msg': success_msg
   }
   if not provider:
-    provider = get_default_sms_providers()
+    providers = get_default_sms_providers()
   elif isinstance(provider, string_types):
-    provider = [{"provider": provider, "country": x.country, "code": x.code.lower()} for x in (
+    providers = [{"provider": provider, "country": x.country, "code": x.code.lower()} for x in (
         frappe.get_cached_doc("SMS Provider", provider).get("countries") or [])]
-    provider.append({"provider": provider, "country": "all", "code": "all"})
-  if provider:
-    return send_via_gateway(arg, providers=provider)
+    if not len(providers):
+      providers = [{"provider": provider, "country": "all", "code": "all"}]
+  else:
+    providers = provider
+
+  if providers:
+    return send_via_gateway(arg, providers=providers)
   else:
     frappe.throw(_("Please Update SMS Settings"))
 
@@ -127,9 +131,9 @@ def _get_provider_validate_data(provider):
   provider_wise_time = frappe._dict()
   for x in provider or []:
     key = x.get("code") or "all"
-    country_wise_provider.setdefault(key.lower(), []).append(x.provider)
+    country_wise_provider.setdefault(key.lower(), []).append(x.get("provider"))
     provider_wise_time.setdefault(
-        x.get("provider"), frappe.get_cached_doc("SMS Provider", x.provider).get("timing") or [])
+        x.get("provider"), frappe.get_cached_doc("SMS Provider", x.get("provider")).get("timing") or [])
   return country_wise_provider, provider_wise_time
 
 
@@ -145,7 +149,7 @@ def send_request(gateway_url, params, headers=None, use_post=False, request_as_j
       response = requests.post(gateway_url, headers=headers, data=params)
   else:
     response = requests.get(gateway_url, headers=headers, params=params)
-  response.raise_for_status()
+
   return response.status_code
 
 
