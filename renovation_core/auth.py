@@ -1,9 +1,12 @@
 import frappe
 import jwt
-from frappe.auth import HTTPRequest, LoginManager, get_lang_code, check_session_stopped, CookieManager
+from frappe.auth import HTTPRequest, LoginManager, check_session_stopped, CookieManager
 
 
 # frappe's CookieManager is having old class style
+from frappe.translate import get_lang_code
+
+
 class CookieManagerJWT(CookieManager, object):
   def flush_cookies(self, response):
     # use this opportunity to set the response headers
