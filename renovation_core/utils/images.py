@@ -64,7 +64,7 @@ def generate_thumbnail(doc):
   thumb_width = cint(frappe.get_value(
       "Renovation Image Settings", "Renovation Image Settings", "thumb_width"))
   if not thumb_width:
-    frappe.msgpring("Please define thumbnail width in Image Settings")
+    frappe.msgprint("Please define thumbnail width in Image Settings")
     thumb_width = 256
   im = Image.open(get_file_path(doc.file_url))
   width, height = im.size
