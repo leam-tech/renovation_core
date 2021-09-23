@@ -94,6 +94,7 @@ def generate_otp(medium="sms", medium_id=None, sms_hash=None, purpose="login", l
     try:
       frappe.sendmail(
           recipients=[medium_id],
+          delayed=False,
           subject=frappe.render_template(
               email_otp_template.subject, render_params),
           message=frappe.render_template(
