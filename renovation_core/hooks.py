@@ -134,6 +134,9 @@ doc_events = {
         "on_change": "renovation_core.doc_events.system_settings.on_change",
         "before_update": "renovation_core.doc_events.system_settings.before_update"
     },
+    "File": {
+        "on_update": "renovation_core.doc_events.file.on_update"
+    },
     "Renovation Sidebar": {
         "on_change": "renovation_core.utils.renovation.clear_sidebar_cache"
     },
