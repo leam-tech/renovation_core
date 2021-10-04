@@ -198,15 +198,23 @@ def get_thumbnail_url(dt, dn, df):
   df: `str`
     The field on the Doc it is attached to i.e: the "Attach" field
   """
+
   file_url = frappe.get_value(dt, dn, df)
+  if not file_url:
+    return
+
   if frappe.is_table(dt):
     dt, dn = frappe.get_value(dt, dn, ("parenttype", "parent"))
 
-  attachments = get_attachments_by_docfield(dt, dn, df, file_url)
-  return attachments[0].get("thumbnail_url") if len(attachments) else None
+  thumbnail_url = get_thumbnail_url_by_docfield(dt, dn, df, file_url)
+  if not thumbnail_url:
+    thumbnail_url = get_thumbnail_url_by_file_url(file_url)
+
+  return thumbnail_url
 
 
-def get_attachments_by_docfield(dt, dn, df, file_url):
+def get_thumbnail_url_by_docfield(dt, dn, df, file_url):
+  '''Will try to find the thumbnail url by the field the image is attached to'''
   fields = ["thumbnail_url"]
   filters = {"attached_to_name": dn,
              "file_url": file_url,
@@ -215,13 +223,17 @@ def get_attachments_by_docfield(dt, dn, df, file_url):
   files = frappe.get_all(
       "File",
       fields=fields,
-      filters=filters)
+      filters=filters
+  )
+  return files[0].get("thumbnail_url") if len(files) else None
 
-  if not files:
-    # lets try again to find the image just by looking at file_url
-    files = frappe.get_all(
-        "File",
-        fields=fields,
-        filters={"file_url": file_url,
-                 "thumbnail_url": ("!=", "")})
-  return files
+
+def get_thumbnail_url_by_file_url(file_url):
+  '''Will try to find a thumbnail url by file_url'''
+  files = frappe.get_all(
+      "File",
+      fields=["thumbnail_url"],
+      filters={"file_url": file_url,
+               "thumbnail_url": ("!=", "")}
+  )
+  return files[0].get("thumbnail_url") if len(files) else None
