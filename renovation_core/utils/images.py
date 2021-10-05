@@ -185,3 +185,55 @@ def saveImage(im, filename, extn):
 def get_attachments(doctype, name, only_images=False, ignore_permissions=False):
   from .files import get_attachments as get_attach
   return get_attach(doctype, name, only_images, ignore_permissions)
+
+
+def get_thumbnail_url(dt, dn, df):
+  """
+  Fetches the thumbnail url (if it exists) of an image field given:
+
+  dt: `str`
+    The Doc-type it is defined on
+  dn: `str`
+    The name of Doc it is attached to
+  df: `str`
+    The field on the Doc it is attached to i.e: the "Attach" field
+  """
+
+  file_url = frappe.get_value(dt, dn, df)
+  if not file_url:
+    return
+
+  if frappe.is_table(dt):
+    dt, dn = frappe.get_value(dt, dn, ("parenttype", "parent"))
+
+  thumbnail_url = get_thumbnail_url_by_docfield(dt, dn, df, file_url)
+  if not thumbnail_url:
+    thumbnail_url = get_thumbnail_url_by_file_url(file_url)
+
+  return thumbnail_url
+
+
+def get_thumbnail_url_by_docfield(dt, dn, df, file_url):
+  '''Will try to find the thumbnail url by the field the image is attached to'''
+  fields = ["thumbnail_url"]
+  filters = {"attached_to_name": dn,
+             "file_url": file_url,
+             "attached_to_doctype": dt,
+             "attached_to_field": df}
+  files = frappe.get_all(
+      "File",
+      fields=fields,
+      filters=filters
+  )
+  return files[0].get("thumbnail_url") if len(files) else None
+
+
+def get_thumbnail_url_by_file_url(file_url):
+  '''Will try to find a thumbnail url by file_url'''
+  files = frappe.get_all(
+      "File",
+      fields=["thumbnail_url"],
+      filters={"file_url": file_url,
+               "thumbnail_url": ("!=", "")}
+  )
+  return files[0].get("thumbnail_url") if len(files) else None
