@@ -8,6 +8,11 @@ from frappe.utils import cint
 def is_image_path(path):
   if not path:
     return
+    
+  # Skip external files
+  if not path.startswith("/"):
+    return
+
   exts = ["jpg", "jpeg", "png"]
   path = path.lower()
   for e in exts:
