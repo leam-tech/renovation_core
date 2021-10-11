@@ -10,7 +10,7 @@ def is_image_path(path):
     return
     
   # Skip external files
-  if not path.startswith("/"):
+  if not path.startswith(("/files/", "/private/files/")):
     return
 
   exts = ["jpg", "jpeg", "png"]
