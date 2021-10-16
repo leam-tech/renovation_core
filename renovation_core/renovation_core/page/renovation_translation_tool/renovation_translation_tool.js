@@ -23,7 +23,7 @@ class RenovationTranslationTool {
         frappe.call({
             module: "renovation_core.renovation_core",
             page: "renovation_translation_tool",
-            method: "get_doctypes"
+            method: "get_translatable_doctypes"
         }).then((res) => {
             this.doctypes = res.message.doctypes;
             this.setup_doctype_filter();
@@ -84,13 +84,27 @@ class RenovationTranslationTool {
     }
 
     fetch_docfields() {
+        if (!this.selected_doctype) {
+            return
+        }
         // fetch translatable docfields
+        frappe.call({
+            module: "renovation_core.renovation_core",
+            page: "renovation_translation_tool",
+            method: "get_translatable_docfields",
+            args: {
+                "doctype": this.selected_doctype
+            }
+        }).then((res) => {
+            this.doctypes = res.message.doctypes;
+            this.docfield_selector.$wrapper.find("select").add_options(res.message.docfields);
+        });
     }
 
     load_translations() {
         // load translations
         if (this.selected_doctype && this.selected_docfield && this.selected_language) {
-            
+
         }
     }
 }
