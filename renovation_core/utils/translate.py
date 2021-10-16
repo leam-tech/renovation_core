@@ -4,19 +4,31 @@ from frappe.model.document import Document
 
 
 @frappe.whitelist(allow_guest=True)
-def translate_value(values, lang, translateable_kyes=None, key=None):
+def translate_value(values, lang, translatable_keys=None, key=None, doc=None):
   if isinstance(values, (dict, Document)):
     if isinstance(values, Document):
       values = values.as_dict()
+
+    if values.get("doctype") and values.get("name"):
+      # Let's treat the object as a doc
+      doc = values
+
     for k, val in values.items():
-      values[k] = translate_value(val, lang, translateable_kyes, k)
+      values[k] = translate_value(val, lang, translatable_keys, k, doc=doc)
   elif isinstance(values, (list, tuple, set)):
     if isinstance(values, (tuple, set)):
       values = list(values)
     for k, val in enumerate(values):
-      values[k] = translate_value(val, lang, translateable_kyes, key)
-  elif not (translateable_kyes and key) or key in translateable_kyes:
-    values = _(values, lang)
+      values[k] = translate_value(val, lang, translatable_keys, key, doc=doc)
+  elif not (translatable_keys and key) or key in translatable_keys:
+    if doc:
+      values = get_doc_field_translation(
+          key,
+          doc=doc,
+          lang=lang,
+          value=values)
+    else:
+      values = _(values, lang)
   return values
 
 
@@ -177,3 +189,91 @@ def get_doc_translations(doctype, name):
           tr_dict[t.language][fieldname] = t.translated_text
 
   return tr_dict
+
+
+def get_doc_field_translation(
+        fieldname,
+        doc=None,
+        doctype=None,
+        docname=None,
+        parenttype=None,
+        parent=None,
+        lang=None,
+        value=-1):
+  """
+  Get Translated value for a Field
+  :param fieldname: The name of the field to translate
+  :param doc: The doc to get the value from (if not passed, you can use the following params)
+  :param doctype: The doctype of the doc
+  :param docname: The name of the doc
+  :param parenttype: The parenttype of the doc
+  :param parent: The parent of the doc
+  :param lang: The language to get the value for (optional)
+  :param value: The value to translate (optional, fetched from doc otherwise)
+          The default value is -1, which indicates a manual value was not passed
+          It helps in case manual_value = None and doc.get(fieldname) is not None
+
+
+
+  Precedence Order:
+      key:doctype:name:fieldname
+      *:doctype:name:fieldname
+      key:doctype:name
+      key:parenttype:parent
+      key:doctype:fieldname
+      key:doctype
+      key:parenttype
+
+      key
+  """
+  if doc:
+    doctype = doc.get("doctype")
+    docname = doc.get("name")
+    parenttype = doc.get("parenttype")
+    parent = doc.get("parent")
+
+  if value == -1:
+    value = doc.get(fieldname) if doc else None
+
+  if not isinstance(value, str):
+    value = ""
+
+  plain_translation = frappe._(value)
+
+  # key:doctype:name:fieldname
+  field_translation = frappe._(value, lang=lang, context=f"{doctype}:{docname}:{fieldname}")
+  if field_translation != plain_translation:
+    return field_translation
+
+  # *:doctype:name:fieldname
+  field_translation = frappe._("*", lang=lang, context=f"{doctype}:{docname}:{fieldname}")
+  if field_translation != frappe._("*"):
+    return field_translation
+
+  # key:doctype:name
+  doc_translation = frappe._(value, lang=lang, context=f"{doctype}:{docname}")
+  if doc_translation != plain_translation:
+    return doc_translation
+
+  # key:parenttype:parent
+  if parenttype and parent:
+    parent_translation = frappe._(value, lang=lang, context=f"{parenttype}:{parent}")
+    if parent_translation != plain_translation:
+      return parent_translation
+
+  # key:doctype:fieldname
+  doctype_field_translation = frappe._(value, lang=lang, context=f"{doctype}:{fieldname}")
+  if doctype_field_translation != plain_translation:
+    return doctype_field_translation
+
+  # key:doctype
+  doctype_translation = frappe._(value, lang=lang, context=f"{doctype}")
+  if doctype_translation != plain_translation:
+    return doctype_translation
+
+  if parenttype:
+    parenttype_translation = frappe._(value, lang=lang, context=f"{parenttype}")
+    if parenttype_translation != plain_translation:
+      return parenttype_translation
+
+  return frappe._(value)
