@@ -1,4 +1,5 @@
 import frappe
+from frappe.model.db_query import DatabaseQuery
 
 not_allowed_in_translation = ["DocType"]
 
@@ -32,3 +33,76 @@ def get_translatable_docfields(doctype):
     return {
         "docfields": sorted(translatable_docfields_list, key=lambda d: d['label'])
     }
+
+
+@frappe.whitelist()
+def get_translatable_docnames(doctype):
+    __check_read_renovation_translation_tool_perm()
+    docnames = frappe.get_all(doctype, fields=["name"])
+    docnames_list = [{"label": frappe._(d.get("name")), "value": d.get("name")} for d in docnames]
+    return {
+        "docnames": sorted(docnames_list, key=lambda d: d['label'])
+    }
+
+
+def __formulate_possible_contexts(doctype=None, docname=None, fieldname=None, parenttype=None, parent=None):
+    """
+     Possible Contexts in Precedence Order:
+      key:doctype:name:fieldname
+      key:doctype:name
+      key:parenttype:parent
+      key:doctype:fieldname
+      key:doctype
+      key:parenttype
+    """
+    contexts = []
+    if doctype and docname and fieldname:
+        contexts.append(f'{doctype}:{docname}:{fieldname}')
+    if doctype and docname:
+        contexts.append(f'{doctype}:{docname}')
+    if parenttype and parent:
+        contexts.append(f'{parenttype}:{parent}')
+    if doctype and fieldname:
+        contexts.append(f'{doctype}:{fieldname}')
+    if doctype:
+        contexts.append(f'{doctype}')
+    if parenttype:
+        contexts.append(f'{parenttype}')
+    return contexts
+
+
+@frappe.whitelist()
+def get_translations(language: str, doctype: str, docname: str = None, docfield: str = None):
+    """
+    Try and get all possible translations as seen in Translation doctype only..
+    Arguments:
+        language: [Required]
+        doctype: [Required]
+        docname: [Optional]
+        docfield: [Optional]
+    """
+    __check_read_renovation_translation_tool_perm()
+    possible_contexts = __formulate_possible_contexts(doctype=doctype, fieldname=docfield, docname=docname)
+    if frappe.is_table(doctype):
+        possible_parenttypes_and_parents = frappe.get_all(doctype, field="parent,parenttype",
+                                                          filters=[["parenttype", "!=", ""], ['parent', '!=', '']])
+        for p in possible_parenttypes_and_parents:
+            possible_contexts.extend(
+                __formulate_possible_contexts(parenttype=p.get("parenttype"), parent=p.get("parent")))
+    filters = [["language", "=", language], ["context", "in", possible_contexts]]
+    filters_conditions = []
+    DatabaseQuery("Translation").build_filter_conditions(filters, filters_conditions, ignore_permissions=True)
+
+    if doctype and docname:
+        pass
+    if not docfield:
+        pass
+
+    filters_conditions = ' and '.join(filters_conditions)
+    where_conditions = filters_conditions
+    sql = """
+    SELECT name, source_text, translated_text , context
+    from tabTranslation
+    where {where_conditions}
+    """.format(where_conditions=where_conditions)
+    translations = frappe.db.sql(sql, as_dict=1)
