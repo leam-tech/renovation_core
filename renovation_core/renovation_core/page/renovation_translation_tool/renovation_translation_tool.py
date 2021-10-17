@@ -117,12 +117,13 @@ def get_translations(language: str, doctype: str, docname: str = None, docfield:
     where_conditions += f" and ( {context_filters_conditions} )"
 
     sql = """
-    SELECT '{doctype}' as 'document_type', 
+    SELECT  `tabTranslation`.name,
+            '{doctype}' as 'document_type', 
             IF('{docname}' IS NULL, '', '{docname}') as 'docname', 
             IF('{docfield}' IS NULL, '', '{docfield}') as 'docfield', 
             IF('{docname}' IS NOT NULL AND '{docfield}' IS NOT NULL, {select_condition}, '') as 'value', 
             source_text, translated_text , context
-    from tabTranslation
+    from `tabTranslation`
     where {where_conditions}
     """.format(where_conditions=where_conditions, doctype=doctype, docname=docname or "", docfield=docfield or "",
                select_condition=(

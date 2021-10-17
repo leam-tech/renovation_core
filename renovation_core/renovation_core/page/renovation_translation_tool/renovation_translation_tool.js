@@ -16,7 +16,6 @@ class RenovationTranslationTool {
         this.wrapper = $(page.body);
         this.body = $(this.wrapper).find(".renovation-translations");
         this.wrapper.append(frappe.render_template('renovation_translation_tool'));
-        frappe.utils.bind_actions_with_object(this.wrapper, this);
         this.setup_language_filter();
         this.fetch_doctypes()
     }
@@ -50,6 +49,9 @@ class RenovationTranslationTool {
             options: languages,
             reqd: 1,
             change: () => {
+                if (!language_selector.get_value() || (this.selected_language === language_selector.get_value())) {
+                    return
+                }
                 this.selected_language = language_selector.get_value();
                 this.load_translations()
             }
@@ -64,12 +66,18 @@ class RenovationTranslationTool {
             options: this.doctypes,
             reqd: 1,
             change: () => {
+                if (!doctype_selector.get_value() || (this.selected_doctype === doctype_selector.get_value())) {
+                    return
+                }
                 this.selected_doctype = doctype_selector.get_value()
                 this.docfield_selector.$wrapper.find("select").empty()
                 this.docname_selector.$wrapper.find("select").empty()
                 this.body.empty();
+                this.selected_docname = ""
+                this.selected_docfield = ""
                 this.fetch_docnames()
                 this.fetch_docfields()
+                this.load_translations()
             }
         });
 
@@ -82,6 +90,9 @@ class RenovationTranslationTool {
             fieldtype: 'Select',
             options: [],
             change: () => {
+                if (this.selected_docfield === this.docfield_selector.get_value()) {
+                    return
+                }
                 this.selected_docfield = this.docfield_selector.get_value()
                 this.load_translations()
             }
@@ -95,6 +106,9 @@ class RenovationTranslationTool {
             fieldtype: 'Select',
             options: [],
             change: () => {
+                if (this.selected_docname === this.docname_selector.get_value()) {
+                    return
+                }
                 this.selected_docname = this.docname_selector.get_value()
                 this.load_translations()
             }
@@ -240,7 +254,7 @@ class RenovationTranslationTool {
 
     load_translations() {
         // load translations
-        if (this.selected_doctype && this.selected_docfield && this.selected_language) {
+        if (this.selected_doctype && this.selected_language) {
             frappe.call({
                 module: "renovation_core.renovation_core",
                 page: "renovation_translation_tool",
