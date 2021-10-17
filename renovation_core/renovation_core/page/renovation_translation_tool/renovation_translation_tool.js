@@ -24,9 +24,12 @@ class RenovationTranslationTool {
         frappe.call({
             module: "renovation_core.renovation_core",
             page: "renovation_translation_tool",
-            method: "get_translatable_doctypes"
+            method: "get_translatable_doctypes",
+            freeze: true
         }).then((res) => {
             this.doctypes = res.message.doctypes;
+            this.docnames = []
+            this.docfields = []
             this.setup_doctype_filter();
             this.docname_selector()
             this.docfield_selector()
@@ -126,9 +129,10 @@ class RenovationTranslationTool {
             method: "get_translatable_docfields",
             args: {
                 "doctype": this.selected_doctype
-            }
+            },
+            freeze: true
         }).then((res) => {
-            this.docfields = res.message.docfield;
+            this.docfields = res.message.docfields;
             this.docfield_selector.$wrapper.find("select").add_options([{
                 value: "",
                 label: __("Select A Docfield") + "..."
@@ -147,9 +151,10 @@ class RenovationTranslationTool {
             method: "get_translatable_docnames",
             args: {
                 "doctype": this.selected_doctype
-            }
+            },
+            freeze: true
         }).then((res) => {
-            this.docfields = res.message.docfield;
+            this.docnames = res.message.docnames;
             this.docname_selector.$wrapper.find("select").add_options([{
                 value: "",
                 label: __("Select A Docname") + "..."
@@ -164,14 +169,163 @@ class RenovationTranslationTool {
         } else {
             this.show_translations_table(this.translations_list);
         }
-        this.show_add_new_translation();
+        if (!this.translation_btn_added) {
+            this.show_add_new_translation();
+        }
+
     }
 
     show_add_new_translation() {
+        this.translation_btn_added = true
+        /**
+         We need the following to add a translation with context
+         key:doctype:name:fieldname
+         key:doctype:name
+         key:parenttype:parent
+         key:doctype:fieldname
+         key:doctype
+         key:parenttype
+         */
+        // [__("Document Type"), 150],
+        //     [__("Docname"), 150],
+        //     [__("Docfield"), 150],
+        //     [__("Value"), 150],
+        //     [__("Source Text"), 150],
+        //     [__("Translated Text"), 150],
+        //     [__("Context"), 150],
+        //     ["", 40]
         this.page.set_primary_action(
             __("Add A New Translation"),
             () => {
+                let latest_translation = null
+                if (this.selected_docname && this.selected_doctype && this.selected_docfield && this.translations_list && this.translations_list.length) {
+                    latest_translation = this.translations_list[0]
+                }
+                const default_value = latest_translation ? latest_translation.value : null
+                const default_source_text = latest_translation ? latest_translation.source_text : null
+                const default_translated_text = latest_translation ? latest_translation.translated_text : null
+                let default_context = latest_translation ? latest_translation.context : this.selected_doctype
+                if (!latest_translation) {
+                    if (this.selected_docname) {
+                        default_context += `:${this.selected_docname}`
+                    }
+                    if (this.selected_docfield) {
+                        default_context += `:${this.selected_docfield}`
+                    }
+                }
+                let default_fields = [
+                    {
+                        fieldtype: "Data",
+                        label: __("Language"),
+                        reqd: 1,
+                        read_only: 1,
+                        fieldname: "language",
+                        default: this.selected_language
+                    },
+                    {
+                        fieldtype: "Data",
+                        label: __("Document Type"),
+                        reqd: 1,
+                        read_only: 1,
+                        fieldname: "doctype",
+                        default: this.selected_doctype
+                    },
+                    {
+                        fieldtype: "Data",
+                        label: __("Docname"),
+                        reqd: 1,
+                        read_only: 1,
+                        fieldname: "docname",
+                        default: this.selected_docname
+                    },
+                    {
+                        fieldtype: "Data",
+                        label: __("Docfield"),
+                        reqd: 1,
+                        read_only: 1,
+                        fieldname: "docfield",
+                        default: this.selected_docfield
+                    },
+                    {
+                        fieldtype: "Code",
+                        label: __("Value"),
+                        reqd: 1,
+                        read_only: 1,
+                        fieldname: "value",
+                        default: default_value
+                    },
+                    {
+                        fieldtype: "Code",
+                        label: __("Source Text"),
+                        reqd: 1,
+                        read_only: 1,
+                        fieldname: "source_text",
+                        default: default_source_text
+                    },
+                    {
+                        fieldtype: "Code",
+                        label: __("Translated Text"),
+                        reqd: 1,
+                        read_only: 0,
+                        fieldname: "translated_text",
+                        default: default_translated_text
+                    },
+                    {
+                        fieldtype: "Data",
+                        label: __("Context"),
+                        reqd: 1,
+                        read_only: 1,
+                        fieldname: "context",
+                        default: default_context
+                    },
+                ]
+                const set_field_readable = (fieldname) => {
+                    let field = default_fields.find((df) => df.fieldname === fieldname)
+                    field.read_only = 0
+                }
+                if (!this.selected_docfield) {
+                    default_fields = default_fields.filter((df) => df.fieldname !== "docfield")
+                    default_fields = default_fields.filter((df) => df.fieldname !== "value")
+                    set_field_readable("source_text")
 
+                }
+                if (!this.selected_docname) {
+                    default_fields = default_fields.filter((df) => df.fieldname !== "value")
+                    default_fields = default_fields.filter((df) => df.fieldname !== "docname")
+                    set_field_readable("source_text")
+                }
+                let d = new frappe.ui.Dialog({
+                    title: __("Add New Translation"),
+                    fields: default_fields
+                });
+                d.set_primary_action(__('Save'), () => {
+                    /**
+                     language,
+                     source_text,
+                     translated_text,
+                     context=None,
+                     doctype=None,
+                     docname=None,
+                     docfield=None
+                     */
+                    let args = d.get_values();
+                    if (!args) {
+                        return;
+                    }
+                    frappe.call({
+                        method: "renovation_core.utils.translate.add_translation",
+                        args: args,
+                        callback: (r) => {
+                            if (r.exc) {
+                                frappe.msgprint(__("Did not add translation. Please try again!"));
+                            } else {
+                                this.load_translations();
+                            }
+                        }
+                    });
+                    d.hide();
+                });
+                d.show();
             },
             "small-add"
         );
@@ -264,7 +418,8 @@ class RenovationTranslationTool {
                     "doctype": this.selected_doctype,
                     "docname": this.selected_docname,
                     "docfield": this.selected_docfield
-                }
+                },
+                freeze: true
             }).then((res) => {
                 this.translations_list = res.message.translations;
                 this.render_translations()
