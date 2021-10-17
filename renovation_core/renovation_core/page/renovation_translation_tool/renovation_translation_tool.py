@@ -1,5 +1,6 @@
 import frappe
 from frappe.model.db_query import DatabaseQuery
+from frappe.model.meta import is_single
 
 not_allowed_in_translation = ["DocType"]
 
@@ -38,6 +39,10 @@ def get_translatable_docfields(doctype):
 @frappe.whitelist()
 def get_translatable_docnames(doctype):
     __check_read_renovation_translation_tool_perm()
+    if is_single(doctype):
+        return {
+            "docnames": []
+        }
     docnames = frappe.get_all(doctype, fields=["name"])
     docnames_list = [{"label": frappe._(d.get("name")), "value": d.get("name")} for d in docnames]
     return {
@@ -82,27 +87,53 @@ def get_translations(language: str, doctype: str, docname: str = None, docfield:
         docfield: [Optional]
     """
     __check_read_renovation_translation_tool_perm()
+    if is_single(doctype):
+        docname=doctype
     possible_contexts = __formulate_possible_contexts(doctype=doctype, fieldname=docfield, docname=docname)
     if frappe.is_table(doctype):
-        possible_parenttypes_and_parents = frappe.get_all(doctype, field="parent,parenttype",
+        possible_parenttypes_and_parents = frappe.get_all(doctype, fields="Distinct parent,parenttype",
                                                           filters=[["parenttype", "!=", ""], ['parent', '!=', '']])
         for p in possible_parenttypes_and_parents:
             possible_contexts.extend(
                 __formulate_possible_contexts(parenttype=p.get("parenttype"), parent=p.get("parent")))
-    filters = [["language", "=", language], ["context", "in", possible_contexts]]
+    filters = [["language", "=", language]]
+    context_filters = [["context", "in", possible_contexts]]
     filters_conditions = []
+    context_filters_conditions = []
     DatabaseQuery("Translation").build_filter_conditions(filters, filters_conditions, ignore_permissions=True)
-
-    if doctype and docname:
-        pass
-    if not docfield:
-        pass
-
+    DatabaseQuery("Translation").build_filter_conditions(context_filters, context_filters_conditions,
+                                                         ignore_permissions=True)
     filters_conditions = ' and '.join(filters_conditions)
     where_conditions = filters_conditions
+    context_filters_conditions = ' or '.join(context_filters_conditions)
+
+    if doctype and not docname and not docfield:
+        context_filters_conditions += f" or context LIKE '{doctype}:%'"
+    if doctype and docfield and not docname:
+        context_filters_conditions += f" or (context LIKE '{doctype}:%' and context LIKE '%:{docfield}')"
+    if doctype and docname and not docfield:
+        context_filters_conditions += f" or context LIKE '{doctype}:{docname}%'"
+
+    where_conditions += f" and ( {context_filters_conditions} )"
+
     sql = """
-    SELECT name, source_text, translated_text , context
+    SELECT '{doctype}' as 'document_type', 
+            IF('{docname}' IS NULL, '', '{docname}') as 'docname', 
+            IF('{docfield}' IS NULL, '', '{docfield}') as 'docfield', 
+            IF('{docname}' IS NOT NULL AND '{docfield}' IS NOT NULL, {select_condition}, '') as 'value', 
+            source_text, translated_text , context
     from tabTranslation
     where {where_conditions}
-    """.format(where_conditions=where_conditions)
-    translations = frappe.db.sql(sql, as_dict=1)
+    """.format(where_conditions=where_conditions, doctype=doctype, docname=docname or "", docfield=docfield or "",
+               select_condition=(
+                   "(SELECT `tab{doctype}`.{docfield} from `tab{doctype}` WHERE `tab{doctype}`.name ='{docname}')".format(
+                       doctype=doctype, docfield=docfield, docname=docname) if not is_single(doctype) else """
+                    (SELECT `tabSingles`.value
+                      from `tabSingles`
+                      WHERE `tabSingles`.doctype = '{doctype}'
+                        and `tabSingles`.field = '{docfield}')
+                   """.format(doctype=doctype, docfield=docfield)) if docfield else frappe.db.escape(""))
+    translations = frappe.db.sql(sql, as_dict=1, debug=0)
+    return {
+        "translations": translations
+    }
