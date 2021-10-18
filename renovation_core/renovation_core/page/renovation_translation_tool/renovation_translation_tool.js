@@ -15,7 +15,6 @@ class RenovationTranslationTool {
         this.page = page;
         this.wrapper = $(page.body);
         this.body = $(this.wrapper).find(".renovation-translations");
-        this.wrapper.append(frappe.render_template('renovation_translation_tool'));
         this.setup_language_filter();
         this.fetch_doctypes()
     }
