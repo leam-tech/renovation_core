@@ -198,19 +198,22 @@ class RenovationTranslationTool {
                         }).then(r => resolve(r ? r.message : null));
                     });
                 }
-                let latest_translation = null
+                let latest_translation = this.translations_list.filter(df => df.name === this.translation_edit_name)[0]
                 const doctype_is_single = await check_if_single_doctype(this.selected_doctype)
-                const selected_docname = doctype_is_single ? this.selected_doctype : this.selected_docname
-                if (selected_docname && this.selected_doctype && this.selected_docfield) {
-                    if (this.translations_list && this.translations_list.length) {
-                        latest_translation = this.translations_list[0]
+                const selected_docname = doctype_is_single ? this.selected_doctype : this.translation_edit_name ? latest_translation.docname : this.selected_docname
+                const selected_docfield = this.translation_edit_name ? latest_translation.docfield : this.selected_docfield
+
+                if (!this.translation_edit_name && selected_docname && this.selected_doctype && selected_docfield) {
+                    const check_translations = (this.translations_list || []).filter(tr => tr.context === `${this.selected_doctype}:${selected_docname}:${selected_docfield}`)
+                    if (check_translations.length) {
+                        latest_translation = check_translations[0]
                     } else {
                         // lets fetch the latest value/source text from db so user can translate
-                        const response = await frappe.db.get_value(this.selected_doctype, selected_docname, this.selected_docfield)
+                        const response = await frappe.db.get_value(this.selected_doctype, selected_docname, selected_docfield)
                         latest_translation = {}
-                        latest_translation.value = response.message[this.selected_docfield];
+                        latest_translation.value = response.message[selected_docfield];
                         latest_translation.source_text = latest_translation.value
-                        latest_translation.context = `${this.selected_doctype}:${selected_docname}:${this.selected_docfield}`
+                        latest_translation.context = `${this.selected_doctype}:${selected_docname}:${selected_docfield}`
                     }
 
                 }
@@ -222,8 +225,8 @@ class RenovationTranslationTool {
                     if (selected_docname) {
                         default_context += `:${selected_docname}`
                     }
-                    if (this.selected_docfield) {
-                        default_context += `:${this.selected_docfield}`
+                    if (selected_docfield) {
+                        default_context += `:${selected_docfield}`
                     }
                 }
                 let default_fields = [
@@ -257,7 +260,7 @@ class RenovationTranslationTool {
                         reqd: 1,
                         read_only: 1,
                         fieldname: "docfield",
-                        default: this.selected_docfield
+                        default: selected_docfield
                     },
                     {
                         fieldtype: "Code",
@@ -296,19 +299,23 @@ class RenovationTranslationTool {
                     let field = default_fields.find((df) => df.fieldname === fieldname)
                     field.read_only = 0
                 }
-                if (!this.selected_docfield) {
+                if (!selected_docfield) {
                     default_fields = default_fields.filter((df) => df.fieldname !== "docfield")
                     default_fields = default_fields.filter((df) => df.fieldname !== "value")
-                    set_field_readable("source_text")
-
+                    if (!this.translation_edit_name) {
+                        set_field_readable("source_text")
+                    }
                 }
                 if (!selected_docname) {
                     default_fields = default_fields.filter((df) => df.fieldname !== "value")
                     default_fields = default_fields.filter((df) => df.fieldname !== "docname")
-                    set_field_readable("source_text")
+                    if (!this.translation_edit_name) {
+                        set_field_readable("source_text")
+                    }
                 }
+                const dialog_title = this.translation_edit_name ? __("Edit translation") : __("Add New Translation")
                 let d = new frappe.ui.Dialog({
-                    title: __("Add New Translation"),
+                    title: dialog_title,
                     fields: default_fields
                 });
                 d.set_primary_action(__('Save'), () => {
@@ -325,20 +332,44 @@ class RenovationTranslationTool {
                     if (!args) {
                         return;
                     }
-                    frappe.call({
-                        method: "renovation_core.utils.translate.add_translation",
-                        args: args,
-                        callback: (r) => {
-                            if (r.exc) {
-                                frappe.msgprint(__("Did not add translation. Please try again!"));
-                            } else {
-                                this.load_translations();
+                    if (!this.translation_edit_name) {
+                        frappe.call({
+                            method: "renovation_core.utils.translate.add_translation",
+                            args: args,
+                            freeze: true,
+                            callback: (r) => {
+                                if (r.exc) {
+                                    frappe.msgprint(__("Did not add translation. Please try again!"));
+                                } else {
+                                    this.load_translations();
+                                }
                             }
-                        }
-                    });
+                        });
+                    } else {
+                        // simple edit ie change translated value..
+                        frappe.call({
+                            method: "frappe.client.set_value",
+                            args: {
+                                doctype: "Translation",
+                                name: this.translation_edit_name,
+                                fieldname: "translated_text",
+                                value: args.translated_text
+                            },
+                            callback: (r) => {
+                                if (r.exc) {
+                                    frappe.msgprint(__("Did not edit translation. Please try again!"));
+                                } else {
+                                    this.load_translations();
+                                }
+                            }
+                        })
+                    }
                     d.hide();
                 });
                 d.show();
+                d.onhide = () => {
+                    this.translation_edit_name = null
+                };
             },
             "small-add"
         );
@@ -405,7 +436,7 @@ class RenovationTranslationTool {
 
     add_delete_button(row, d) {
         $(`<button class='btn btn-danger btn-xs'>${frappe.utils.icon('delete')}</button>`)
-            .appendTo($(`<td class="pt-4">`).appendTo(row))
+            .appendTo($(`<td class="pt-4">`).appendTo(row)).attr("data-name", d.name)
             .click(function () {
 
             });
@@ -414,8 +445,9 @@ class RenovationTranslationTool {
     add_edit_button(row, d) {
         $(`<button class='btn btn-success btn-xs'>${frappe.utils.icon('edit')}</button>`)
             .appendTo($(`<td class="pt-4">`).appendTo(row))
-            .click(function () {
-
+            .click(() => {
+                this.translation_edit_name = d.name
+                this.page.btn_primary.trigger("click")
             });
     }
 
