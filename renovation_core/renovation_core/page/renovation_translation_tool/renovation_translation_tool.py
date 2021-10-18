@@ -76,6 +76,12 @@ def __formulate_possible_contexts(doctype=None, docname=None, fieldname=None, pa
     return contexts
 
 
+@frappe.whitelist(methods=["GET"])
+def check_if_single_doctype(doctype: str):
+    __check_read_renovation_translation_tool_perm()
+    return bool(is_single(doctype))
+
+
 @frappe.whitelist()
 def get_translations(language: str, doctype: str, docname: str = None, docfield: str = None):
     """
@@ -88,7 +94,7 @@ def get_translations(language: str, doctype: str, docname: str = None, docfield:
     """
     __check_read_renovation_translation_tool_perm()
     if is_single(doctype):
-        docname=doctype
+        docname = doctype
     possible_contexts = __formulate_possible_contexts(doctype=doctype, fieldname=docfield, docname=docname)
     if frappe.is_table(doctype):
         possible_parenttypes_and_parents = frappe.get_all(doctype, fields="Distinct parent,parenttype",

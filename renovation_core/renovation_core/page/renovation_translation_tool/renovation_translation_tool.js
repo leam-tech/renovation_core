@@ -186,28 +186,41 @@ class RenovationTranslationTool {
          key:doctype
          key:parenttype
          */
-        // [__("Document Type"), 150],
-        //     [__("Docname"), 150],
-        //     [__("Docfield"), 150],
-        //     [__("Value"), 150],
-        //     [__("Source Text"), 150],
-        //     [__("Translated Text"), 150],
-        //     [__("Context"), 150],
-        //     ["", 40]
         this.page.set_primary_action(
             __("Add A New Translation"),
-            () => {
+            async () => {
+                const check_if_single_doctype = (doctype) => {
+                    return new Promise(resolve => {
+                        frappe.call({
+                            method: 'renovation_core.renovation_core.page.renovation_translation_tool.renovation_translation_tool.check_if_single_doctype',
+                            args: {doctype},
+                            type: 'GET',
+                        }).then(r => resolve(r ? r.message : null));
+                    });
+                }
                 let latest_translation = null
-                if (this.selected_docname && this.selected_doctype && this.selected_docfield && this.translations_list && this.translations_list.length) {
-                    latest_translation = this.translations_list[0]
+                const doctype_is_single = await check_if_single_doctype(this.selected_doctype)
+                const selected_docname = doctype_is_single ? this.selected_doctype : this.selected_docname
+                if (selected_docname && this.selected_doctype && this.selected_docfield) {
+                    if (this.translations_list && this.translations_list.length) {
+                        latest_translation = this.translations_list[0]
+                    } else {
+                        // lets fetch the latest value/source text from db so user can translate
+                        const response = await frappe.db.get_value(this.selected_doctype, selected_docname, this.selected_docfield)
+                        latest_translation = {}
+                        latest_translation.value = response.message[this.selected_docfield];
+                        latest_translation.source_text = latest_translation.value
+                        latest_translation.context = `${this.selected_doctype}:${selected_docname}:${this.selected_docfield}`
+                    }
+
                 }
                 const default_value = latest_translation ? latest_translation.value : null
                 const default_source_text = latest_translation ? latest_translation.source_text : null
                 const default_translated_text = latest_translation ? latest_translation.translated_text : null
                 let default_context = latest_translation ? latest_translation.context : this.selected_doctype
                 if (!latest_translation) {
-                    if (this.selected_docname) {
-                        default_context += `:${this.selected_docname}`
+                    if (selected_docname) {
+                        default_context += `:${selected_docname}`
                     }
                     if (this.selected_docfield) {
                         default_context += `:${this.selected_docfield}`
@@ -236,7 +249,7 @@ class RenovationTranslationTool {
                         reqd: 1,
                         read_only: 1,
                         fieldname: "docname",
-                        default: this.selected_docname
+                        default: selected_docname
                     },
                     {
                         fieldtype: "Data",
@@ -289,7 +302,7 @@ class RenovationTranslationTool {
                     set_field_readable("source_text")
 
                 }
-                if (!this.selected_docname) {
+                if (!selected_docname) {
                     default_fields = default_fields.filter((df) => df.fieldname !== "value")
                     default_fields = default_fields.filter((df) => df.fieldname !== "docname")
                     set_field_readable("source_text")
