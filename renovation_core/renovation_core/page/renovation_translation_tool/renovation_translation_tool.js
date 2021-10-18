@@ -436,9 +436,25 @@ class RenovationTranslationTool {
 
     add_delete_button(row, d) {
         $(`<button class='btn btn-danger btn-xs'>${frappe.utils.icon('delete')}</button>`)
-            .appendTo($(`<td class="pt-4">`).appendTo(row)).attr("data-name", d.name)
-            .click(function () {
-
+            .appendTo($(`<td class="pt-4">`).appendTo(row))
+            .click(() => {
+                frappe.confirm(__("Confirm delete translation?"), () => {
+                    frappe.call({
+                        freeze: true,
+                        method: "frappe.client.delete",
+                        args: {
+                            doctype: "Translation",
+                            name: d.name,
+                        },
+                        callback: (r) => {
+                            if (r.exc) {
+                                frappe.msgprint(__("Did not delete translation. Please try again!"));
+                            } else {
+                                this.load_translations();
+                            }
+                        }
+                    })
+                })
             });
     }
 
