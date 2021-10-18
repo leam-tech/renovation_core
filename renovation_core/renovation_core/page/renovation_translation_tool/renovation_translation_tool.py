@@ -124,14 +124,22 @@ def get_translations(language: str, doctype: str, docname: str = None, docfield:
 
     sql = """
     SELECT  `tabTranslation`.name,
-            '{doctype}' as 'document_type', 
-            IF('{docname}' IS NULL, '', '{docname}') as 'docname', 
-            IF('{docfield}' IS NULL, '', '{docfield}') as 'docfield', 
-            IF('{docname}' IS NOT NULL AND '{docfield}' IS NOT NULL, {select_condition}, '') as 'value', 
+            SUBSTRING_INDEX(context, ':', 1)  as 'document_type',
+            CASE LENGTH(context) - LENGTH(REPLACE(context, ':', ''))
+            WHEN 2 THEN SUBSTR(context, LOCATE(':', context, 8) + 1,
+                              LOCATE(':', SUBSTR(context, LOCATE(':', context, 8) + 1), 1) - 1)
+            WHEN 1 THEN SUBSTRING_INDEX(context, ':', -1)
+            ELSE '' END     as 'docname', 
+            IF(LENGTH(context) - LENGTH(REPLACE(context, ':', '')) = 2, SUBSTRING_INDEX(context, ':', -1),'')  as 'docfield', 
+            IF(length(SUBSTRING_INDEX(context, ':', 1)) and length((SUBSTR(context, LOCATE(':', context, 8) + 1,
+                                                                      LOCATE(':', SUBSTR(context, LOCATE(':', context, 8) + 1), 1) -
+                                                                      1))) and
+          length(IF(LENGTH(context) - LENGTH(REPLACE(context, ':', '')) = 2, SUBSTRING_INDEX(context, ':', -1),
+                    '')),({select_condition}), '') as 'value', 
             source_text, translated_text , context
     from `tabTranslation`
     where {where_conditions}
-    """.format(where_conditions=where_conditions, doctype=doctype, docname=docname or "", docfield=docfield or "",
+    """.format(where_conditions=where_conditions,
                select_condition=(
                    "(SELECT `tab{doctype}`.{docfield} from `tab{doctype}` WHERE `tab{doctype}`.name ='{docname}')".format(
                        doctype=doctype, docfield=docfield, docname=docname) if not is_single(doctype) else """
