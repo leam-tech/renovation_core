@@ -148,7 +148,13 @@ def get_translations(language: str, doctype: str, docname: str = None, docfield:
                       WHERE `tabSingles`.doctype = '{doctype}'
                         and `tabSingles`.field = '{docfield}')
                    """.format(doctype=doctype, docfield=docfield)) if docfield else frappe.db.escape(""))
-    translations = frappe.db.sql(sql, as_dict=1, debug=0)
+    translations = [{**translation,
+                     'value': frappe.get_cached_value(translation.get("document_type"), translation.get("docname"),
+                                                      translation.get("docfield")) if translation.get(
+                         "document_type") and translation.get("docname") and translation.get(
+                         "docfield") and frappe.db.table_exists(translation.get("document_type")) and frappe.db.exists(
+                         translation.get("document_type"), translation.get("docname")) else translation.get("value")
+                     } for translation in frappe.db.sql(sql, as_dict=1, debug=0)]
     return {
         "translations": translations
     }
