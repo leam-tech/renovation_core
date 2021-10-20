@@ -174,6 +174,18 @@ class RenovationTranslationTool {
 
     }
 
+    get_value_for_translation(doctype, docname, docfield) {
+        return frappe.call({
+            method: "renovation_core.renovation_core.page.renovation_translation_tool.renovation_translation_tool.get_value_from_doc_for_translation",
+            type: 'GET',
+            args: {
+                doctype: doctype,
+                docname: docname,
+                docfield: docfield
+            }
+        });
+    }
+
     show_add_new_translation() {
         this.translation_btn_added = true
         /**
@@ -208,7 +220,7 @@ class RenovationTranslationTool {
                         latest_translation = check_translations[0]
                     } else {
                         // lets fetch the latest value/source text from db so user can translate
-                        const response = await frappe.db.get_value(this.selected_doctype, selected_docname, selected_docfield)
+                        const response = await this.get_value_for_translation(this.selected_doctype, selected_docname, selected_docfield)
                         latest_translation = {}
                         latest_translation.value = response.message[selected_docfield];
                         latest_translation.source_text = latest_translation.value

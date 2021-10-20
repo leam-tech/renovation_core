@@ -2,6 +2,8 @@ import frappe
 from frappe.model.db_query import DatabaseQuery
 from frappe.model.meta import is_single
 
+from frappe.client import get_value
+
 not_allowed_in_translation = ["DocType"]
 
 
@@ -158,3 +160,9 @@ def get_translations(language: str, doctype: str, docname: str = None, docfield:
     return {
         "translations": translations
     }
+
+
+@frappe.whitelist()
+def get_value_from_doc_for_translation(doctype, docname, docfield):
+    parent = frappe.get_value(doctype, docname, 'parenttype')
+    return get_value(doctype, fieldname=docfield, filters=docname, parent=parent)
