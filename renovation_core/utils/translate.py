@@ -22,7 +22,7 @@ def translate_value(values, lang, translatable_keys=None, key=None, doc=None):
       values[k] = translate_value(val, lang, translatable_keys, key, doc=doc)
   elif not (translatable_keys and key) or key in translatable_keys:
     if doc:
-      values = get_doc_field_translation(
+      values = get_ctx_translation(
           key,
           doc=doc,
           lang=lang,
@@ -191,8 +191,8 @@ def get_doc_translations(doctype, name):
   return tr_dict
 
 
-def get_doc_field_translation(
-        fieldname,
+def get_ctx_translation(
+        fieldname=None,
         doc=None,
         doctype=None,
         docname=None,
@@ -201,14 +201,14 @@ def get_doc_field_translation(
         lang=None,
         value=-1):
   """
-  Get Translated value for a Field
+  Get Translated value for a specific context. All params are optional.
   :param fieldname: The name of the field to translate
   :param doc: The doc to get the value from (if not passed, you can use the following params)
   :param doctype: The doctype of the doc
   :param docname: The name of the doc
   :param parenttype: The parenttype of the doc
   :param parent: The parent of the doc
-  :param lang: The language to get the value for (optional)
+  :param lang: The language to get the value for
   :param value: The value to translate (optional, fetched from doc otherwise)
           The default value is -1, which indicates a manual value was not passed
           It helps in case manual_value = None and doc.get(fieldname) is not None
