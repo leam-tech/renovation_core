@@ -238,7 +238,7 @@ def get_doc_field_translation(
   if not isinstance(value, str):
     value = ""
 
-  plain_translation = frappe._(value)
+  plain_translation = frappe._(value, lang=lang)
 
   # key:doctype:name:fieldname
   field_translation = frappe._(value, lang=lang, context=f"{doctype}:{docname}:{fieldname}")
@@ -276,4 +276,4 @@ def get_doc_field_translation(
     if parenttype_translation != plain_translation:
       return parenttype_translation
 
-  return frappe._(value)
+  return frappe._(value, lang=lang)
