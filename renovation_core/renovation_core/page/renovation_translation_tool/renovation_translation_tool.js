@@ -20,19 +20,12 @@ class RenovationTranslationTool {
     }
 
     fetch_doctypes() {
-        frappe.call({
-            module: "renovation_core.renovation_core",
-            page: "renovation_translation_tool",
-            method: "get_translatable_doctypes",
-            freeze: true
-        }).then((res) => {
-            this.doctypes = res.message.doctypes;
-            this.docnames = []
-            this.docfields = []
-            this.setup_doctype_filter();
-            this.docname_selector()
-            this.docfield_selector()
-        });
+        this.docnames = []
+        this.docfields = []
+        this.setup_doctype_filter();
+        this.docname_selector()
+        this.docfield_selector()
+
     }
 
     setup_language_filter() {
@@ -64,8 +57,8 @@ class RenovationTranslationTool {
         let doctype_selector = this.page.add_field({
             label: __("Document Type"),
             fieldname: 'selected_doctype',
-            fieldtype: 'Select',
-            options: this.doctypes,
+            fieldtype: 'Link',
+            options: "DocType",
             reqd: 1,
             change: () => {
                 if (!doctype_selector.get_value() || (this.selected_doctype === doctype_selector.get_value())) {
@@ -73,11 +66,10 @@ class RenovationTranslationTool {
                 }
                 this.selected_doctype = doctype_selector.get_value()
                 this.docfield_selector.$wrapper.find("select").empty()
-                this.docname_selector.$wrapper.find("select").empty()
+                this.docname_selector.set_input("")
                 this.body.empty();
                 this.selected_docname = ""
                 this.selected_docfield = ""
-                this.fetch_docnames()
                 this.fetch_docfields()
                 this.load_translations()
             }
@@ -105,8 +97,8 @@ class RenovationTranslationTool {
         this.docname_selector = this.page.add_field({
             label: __("Docname"),
             fieldname: 'selected_docname',
-            fieldtype: 'Select',
-            options: [],
+            fieldtype: 'Dynamic Link',
+            options: "selected_doctype",
             change: () => {
                 if (this.selected_docname === this.docname_selector.get_value()) {
                     return
@@ -136,28 +128,6 @@ class RenovationTranslationTool {
                 value: "",
                 label: __("Select A Docfield") + "..."
             }].concat(res.message.docfields));
-        });
-    }
-
-    fetch_docnames() {
-        if (!this.selected_doctype) {
-            return
-        }
-        // fetch docnames
-        frappe.call({
-            module: "renovation_core.renovation_core",
-            page: "renovation_translation_tool",
-            method: "get_translatable_docnames",
-            args: {
-                "doctype": this.selected_doctype
-            },
-            freeze: true
-        }).then((res) => {
-            this.docnames = res.message.docnames;
-            this.docname_selector.$wrapper.find("select").add_options([{
-                value: "",
-                label: __("Select A Docname") + "..."
-            }].concat(res.message.docnames));
         });
     }
 
