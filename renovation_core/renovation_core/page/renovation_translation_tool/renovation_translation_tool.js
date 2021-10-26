@@ -16,11 +16,10 @@ class RenovationTranslationTool {
         this.wrapper = $(page.body);
         this.body = $(this.wrapper).find(".renovation-translations");
         this.setup_language_filter();
-        this.fetch_doctypes()
+        this.setup_renovation_translation_tool_filter_fields()
     }
 
-    fetch_doctypes() {
-        this.docnames = []
+    setup_renovation_translation_tool_filter_fields() {
         this.docfields = []
         this.setup_doctype_filter();
         this.docname_selector()
