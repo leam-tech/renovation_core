@@ -154,7 +154,8 @@ def get_translations(language: str, doctype: str, docname: str = None, docfield:
                      'value': frappe.get_cached_value(translation.get("document_type"), translation.get("docname"),
                                                       translation.get("docfield")) if translation.get(
                          "document_type") and translation.get("docname") and translation.get(
-                         "docfield") and frappe.db.table_exists(translation.get("document_type")) and frappe.db.exists(
+                         "docfield") and (frappe.db.table_exists(translation.get("document_type")) or is_single(
+                         translation.get("document_type"))) and frappe.db.exists(
                          translation.get("document_type"), translation.get("docname")) else translation.get("value")
                      } for translation in frappe.db.sql(sql, as_dict=1, debug=0)]
     return {
