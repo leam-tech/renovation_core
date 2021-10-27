@@ -66,6 +66,8 @@ class RenovationTranslationTool {
                 this.selected_doctype = doctype_selector.get_value()
                 this.docfield_selector.$wrapper.find("select").empty()
                 this.docname_selector.set_input("")
+                this.docname_selector.df.read_only = frappe.model.is_single(this.selected_doctype) ? 1 : 0
+                this.docname_selector.refresh()
                 this.body.empty();
                 this.selected_docname = ""
                 this.selected_docfield = ""
@@ -98,6 +100,7 @@ class RenovationTranslationTool {
             fieldname: 'selected_docname',
             fieldtype: 'Dynamic Link',
             options: "selected_doctype",
+            read_only: 1,
             change: () => {
                 if (this.selected_docname === this.docname_selector.get_value()) {
                     return
@@ -297,7 +300,7 @@ class RenovationTranslationTool {
                 if (selected_docfield && !this.translation_edit_name) {
                     let field = default_fields.find((df) => df.fieldname === 'source_text')
                     field.read_only = 0
-                    field.description = __("Can be set to wildcard (*) to for second order of precedence. Please read documentation below for further clarifications.")
+                    field.description = __("Can be set to wildcard (*) for second order of precedence. Please read documentation below for further clarifications.")
                 }
                 const dialog_title = this.translation_edit_name ? __("Edit translation") : __("Add New Translation")
                 let d = new frappe.ui.Dialog({
