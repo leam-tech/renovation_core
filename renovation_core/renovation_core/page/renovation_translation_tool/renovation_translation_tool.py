@@ -1,21 +1,7 @@
 import frappe
 from frappe.model.db_query import DatabaseQuery
 from frappe.model.meta import is_single
-
 from frappe.client import get_value
-
-not_allowed_in_translation = ["DocType"]
-
-
-@frappe.whitelist()
-def get_translatable_doctypes():
-    __check_read_renovation_translation_tool_perm()
-    doctypes = frappe.get_all("DocType",
-                              filters={"name": ("not in", ",".join(not_allowed_in_translation))}, fields=["name"])
-    doctypes_list = [{"label": frappe._(d.get("name")), "value": d.get("name")} for d in doctypes]
-    return {
-        "doctypes": sorted(doctypes_list, key=lambda d: d['label'])
-    }
 
 
 def __check_read_renovation_translation_tool_perm():
@@ -35,20 +21,6 @@ def get_translatable_docfields(doctype):
     translatable_docfields_list = [{"label": frappe._(d), "value": d} for d in translatable_docfields]
     return {
         "docfields": sorted(translatable_docfields_list, key=lambda d: d['label'])
-    }
-
-
-@frappe.whitelist()
-def get_translatable_docnames(doctype):
-    __check_read_renovation_translation_tool_perm()
-    if is_single(doctype):
-        return {
-            "docnames": []
-        }
-    docnames = frappe.get_all(doctype, fields=["name"])
-    docnames_list = [{"label": frappe._(d.get("name")), "value": d.get("name")} for d in docnames]
-    return {
-        "docnames": sorted(docnames_list, key=lambda d: d['label'])
     }
 
 
@@ -76,12 +48,6 @@ def __formulate_possible_contexts(doctype=None, docname=None, fieldname=None, pa
     if parenttype:
         contexts.append(f'{parenttype}')
     return contexts
-
-
-@frappe.whitelist(methods=["GET"])
-def check_if_single_doctype(doctype: str):
-    __check_read_renovation_translation_tool_perm()
-    return bool(is_single(doctype))
 
 
 @frappe.whitelist()

@@ -172,17 +172,8 @@ class RenovationTranslationTool {
         this.page.set_primary_action(
             __("Add A New Translation"),
             async () => {
-                const check_if_single_doctype = (doctype) => {
-                    return new Promise(resolve => {
-                        frappe.call({
-                            method: 'renovation_core.renovation_core.page.renovation_translation_tool.renovation_translation_tool.check_if_single_doctype',
-                            args: {doctype},
-                            type: 'GET',
-                        }).then(r => resolve(r ? r.message : null));
-                    });
-                }
                 let latest_translation = this.translations_list.filter(df => df.name === this.translation_edit_name)[0]
-                const doctype_is_single = await check_if_single_doctype(this.selected_doctype)
+                const doctype_is_single = frappe.model.is_single(this.selected_doctype)
                 const selected_docname = doctype_is_single ? this.selected_doctype : this.translation_edit_name ? latest_translation.docname : this.selected_docname
                 const selected_docfield = this.translation_edit_name ? latest_translation.docfield : this.selected_docfield
 
