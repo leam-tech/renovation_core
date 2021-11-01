@@ -291,7 +291,9 @@ class RenovationTranslationTool {
                 if (selected_docfield && !this.translation_edit_name) {
                     let field = default_fields.find((df) => df.fieldname === 'source_text')
                     field.read_only = 0
-                    field.description = __("Can be set to wildcard (*) for second order of precedence. Please read documentation below for further clarifications.")
+                    if (selected_docfield && selected_docname) {
+                        field.description = __("Can be set to wildcard (*) for second order of precedence. Please read documentation below for further clarifications.")
+                    }
                 }
                 const dialog_title = this.translation_edit_name ? __("Edit translation") : __("Add New Translation")
                 let d = new frappe.ui.Dialog({
