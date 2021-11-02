@@ -31,10 +31,21 @@ class RenovationTranslationTool {
         let languages = Object.keys(frappe.boot.lang_dict).map(language_label => {
             let value = frappe.boot.lang_dict[language_label];
             return {
-                label: `${language_label} (${value})`,
+                label: `${value} - ${language_label} `,
                 value: value
             };
+        }).sort(function (a, b) {
+            const labelA = a.label.toUpperCase();
+            const labelB = b.label.toUpperCase();
+            if (labelA < labelB) {
+                return -1;
+            }
+            if (labelA > labelB) {
+                return 1;
+            }
+            return 0;
         });
+        
 
         let language_selector = this.page.add_field({
             label: __("Select Language"),
