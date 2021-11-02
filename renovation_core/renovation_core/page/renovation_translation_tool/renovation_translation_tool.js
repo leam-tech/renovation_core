@@ -163,6 +163,7 @@ class RenovationTranslationTool {
         /**
          We need the following to add a translation with context
          key:doctype:name:fieldname
+         *:doctype:name:fieldname
          key:doctype:name
          key:parenttype:parent
          key:doctype:fieldname
