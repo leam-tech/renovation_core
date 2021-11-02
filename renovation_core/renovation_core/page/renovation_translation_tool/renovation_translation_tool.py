@@ -92,15 +92,19 @@ def get_translations(language: str, doctype: str, docname: str = None, docfield:
 
     sql = """
     SELECT  `tabTranslation`.name,
+            #  extract doctype from context
             SUBSTRING_INDEX(context, ':', 1)  as 'document_type',
+            #  extract docname from context
             CASE LENGTH(context) - LENGTH(REPLACE(context, ':', ''))
-            WHEN 2 THEN SUBSTR(context, LOCATE(':', context, 8) + 1,
-                              LOCATE(':', SUBSTR(context, LOCATE(':', context, 8) + 1), 1) - 1)
+            WHEN 2 THEN SUBSTR(context, LOCATE(':', context) + 1,
+                              LOCATE(':', SUBSTR(context, LOCATE(':', context) + 1), 1) - 1)
             WHEN 1 THEN SUBSTRING_INDEX(context, ':', -1)
             ELSE '' END     as 'docname', 
-            IF(LENGTH(context) - LENGTH(REPLACE(context, ':', '')) = 2, SUBSTRING_INDEX(context, ':', -1),'')  as 'docfield', 
-            IF(length(SUBSTRING_INDEX(context, ':', 1)) and length((SUBSTR(context, LOCATE(':', context, 8) + 1,
-                                                                      LOCATE(':', SUBSTR(context, LOCATE(':', context, 8) + 1), 1) -
+            #  extract docfield from context
+            IF(LENGTH(context) - LENGTH(REPLACE(context, ':', '')) = 2, SUBSTRING_INDEX(context, ':', -1),'')  as 'docfield',
+            #  extract value from context if docname and docfield are present
+            IF(length(SUBSTRING_INDEX(context, ':', 1)) and length((SUBSTR(context, LOCATE(':', context) + 1,
+                                                                      LOCATE(':', SUBSTR(context, LOCATE(':', context) + 1), 1) -
                                                                       1))) and
           length(IF(LENGTH(context) - LENGTH(REPLACE(context, ':', '')) = 2, SUBSTRING_INDEX(context, ':', -1),
                     '')),({select_condition}), '') as 'value', 
