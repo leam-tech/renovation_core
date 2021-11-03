@@ -1,0 +1,26 @@
+{
+ "content": null,
+ "creation": "2021-10-14 15:54:47.517021",
+ "docstatus": 0,
+ "doctype": "Page",
+ "idx": 0,
+ "modified": "2021-10-14 15:54:47.517021",
+ "modified_by": "Administrator",
+ "module": "Renovation Core",
+ "name": "renovation_translation_tool",
+ "owner": "Administrator",
+ "page_name": "renovation-translation-tool",
+ "roles": [
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "Translator"
+  }
+ ],
+ "script": null,
+ "standard": "Yes",
+ "style": null,
+ "system_page": 1,
+ "title": "Renovation Translation Tool"
+}
