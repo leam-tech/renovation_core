@@ -1,0 +1,63 @@
+<hr>
+<div class="p-3">
+    <h4>{%= __("Some notes on Translations") %}:</h4>
+    <ul>
+        <li>
+            <div>
+                {%= __("Translations context introduced are as follows. Please note the <em><strong>Order of
+                Precedence</strong></em>.")
+                %}
+                <ul>
+                    <li>
+                        <code>key:doctype:name:fieldname </code>
+                        ( for example <code>frappe._(key, context="TODO:123123:description")</code> )
+                    </li>
+                    <li><code>*:doctype:name:fieldname</code>
+                        ( for example <code>frappe._("*", context="TODO:123123:description")</code> )
+                    </li>
+                    <li>
+                        <code>key:doctype:name</code>
+                    </li>
+                    <li>
+                        <code>key:parenttype:parent</code>
+                    </li>
+                    <li>
+                        <code>key:doctype:fieldname</code>
+                    </li>
+                    <li>
+                        <code>key:doctype</code>
+                    </li>
+                    <li>
+                        <code>key:parenttype</code>
+                    </li>
+                    <li>
+                        <code>key</code>
+                    </li>
+                </ul>
+            </div>
+        </li>
+        <li>
+            <div>
+                {%= __("Translations can be fetched using the following utility functions") %}
+                <ul>
+                    <li>{%= __("For fetching translations based on order of precedence mentioned above use
+                        <code>renovation_core.utils.translate.get_ctx_translation</code> ") %}
+                    </li>
+                    <li>{%= __("For fetching translated doc based on order of precedence use
+                        <code>renovation_core.utils.translate.get_doc_translations</code> ") %}
+                    </li>
+                </ul>
+            </div>
+        </li>
+    </ul>
+    <hr>
+    <h4>{%= __("Quick help on adding a Translation") %}:</h4>
+    <p> By Selecting a filter (doctype , docname and docfield ) you decide the translation context. </p>
+    <p> For example selecting doctype, docname and docfield the context will be <code>doctype:name:fieldname</code>.
+        Please check the notes above for the different ways of formulating the context. </p>
+    <hr>
+    <p>{%= __("If these instructions where not helpful, please add in your suggestions on GitHub Issues.") %}
+        <a href="https://github.com/leam-tech/renovation_core/issues" target="_blank" rel="noopener noreferrer">{%=
+            __("Submit an Issue") %}</a>
+    </p>
+</div>
