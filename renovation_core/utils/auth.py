@@ -92,8 +92,8 @@ def generate_otp(medium="sms", medium_id=None, sms_hash=None, purpose="login", l
     )
     if hasattr(email_otp_template, "get_formatted_email") and hasattr(getattr(email_otp_template, "get_formatted_email"), "__call__"):
       formatted_email = email_otp_template.get_formatted_email(render_params)
-      email_subject = formatted_email.subject
-      email_message = formatted_email.message
+      email_subject = formatted_email.get("subject")
+      email_message = formatted_email.get("message")
     else:
       email_subject = frappe.render_template(
               email_otp_template.subject, render_params)
