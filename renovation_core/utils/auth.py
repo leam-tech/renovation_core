@@ -90,15 +90,21 @@ def generate_otp(medium="sms", medium_id=None, sms_hash=None, purpose="login", l
         email=medium_id,
         user=frappe.get_doc("User", user) if user else frappe._dict()
     )
-    status = "fail"
+    if hasattr(email_otp_template, "get_formatted_email") and hasattr(getattr(email_otp_template, "get_formatted_email"), "__call__"):
+      formatted_email = email_otp_template.get_formatted_email(render_params)
+      email_subject = formatted_email.get("subject")
+      email_message = formatted_email.get("message")
+    else:
+      email_subject = frappe.render_template(
+              email_otp_template.subject, render_params)
+      email_message = frappe.render_template(
+              email_otp_template.response, render_params)
     try:
       frappe.sendmail(
           recipients=[medium_id],
           delayed=False,
-          subject=frappe.render_template(
-              email_otp_template.subject, render_params),
-          message=frappe.render_template(
-              email_otp_template.response, render_params)
+          subject=email_subject,
+          message=email_message
       )
       status = "success"
     except frappe.OutgoingEmailError:
