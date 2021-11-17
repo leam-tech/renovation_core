@@ -14,7 +14,7 @@ from .sms_setting import send_sms
 
 
 @frappe.whitelist(allow_guest=True)
-def generate_otp(medium="sms", medium_id=None, sms_hash=None, purpose="login", lang="en"):
+def generate_otp(medium="sms", medium_id=None, sms_hash=None, purpose="login", lang=None):
   """
   Generate and Send an OTP through the medium specified. we generate new pin on each call, ignoring previous pins
 
@@ -29,6 +29,11 @@ def generate_otp(medium="sms", medium_id=None, sms_hash=None, purpose="login", l
   :param sms_hash: The hash that should be appended to OTP SMS
   :param purpose: Specify an optional purpose (login, pwd_reset) to make a custom context
   :param lang: Language of the OTP message (SMS or Email)
+
+  Priority of language set (frappe.local.lang):
+  1. Accept-Language header
+  2. lang kwarg
+  3. is user exists from medium_id (email or mobile) ie user.lang
   """
 
   if medium not in ("sms", "email"):
@@ -37,10 +42,16 @@ def generate_otp(medium="sms", medium_id=None, sms_hash=None, purpose="login", l
   if not medium_id:
     frappe.throw(f"medium_id is mandatory")
 
-  user = get_linked_user(id_type=medium, id=medium_id)
-  if user:
-    lang = frappe.db.get_value("User", user, "language")
-  frappe.local.lang = lang
+  if not frappe.get_request_header("Accept-Language"):
+    # check if existing user and look for lang
+    user = get_linked_user(id_type=medium, id=medium_id)
+    user_lang = None
+    if user:
+      user_lang = frappe.db.get_value("User", user, "language")
+    if frappe.db.exists("Language", lang):
+      frappe.local.lang = lang
+    elif user_lang:
+      frappe.local.lang = user_lang
 
   # generate a pin
   otp = frappe.safe_decode(str(get_otp()))
