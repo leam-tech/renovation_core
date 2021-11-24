@@ -31,27 +31,32 @@ def generate_otp(medium="sms", medium_id=None, sms_hash=None, purpose="login", l
   :param lang: Language of the OTP message (SMS or Email)
 
   Priority of language set (frappe.local.lang):
-  1. Accept-Language header
-  2. lang kwarg
-  3. is user exists from medium_id (email or mobile) ie user.lang
+  1. lang kwarg
+  2. Accept-Language header or from frappe.session.user (done by frappe )
+  3. is user exists from medium_id (email or mobile) ie user.lang (ie Guest Users)
   """
 
   if medium not in ("sms", "email"):
-    frappe.throw("medium can only be 'sms' or 'email'")
+    frappe.throw(_("medium can only be 'sms' or 'email'"))
 
   if not medium_id:
-    frappe.throw(f"medium_id is mandatory")
+    frappe.throw(_("medium_id is mandatory"))
 
-  if not frappe.get_request_header("Accept-Language"):
+  original_lang = frappe.local.lang
+
+
+  if lang:
+    lang = frappe.db.exists("Language", lang)
+    if lang:
+      frappe.local.lang = lang
+
+  if not lang and not frappe.get_request_header("Accept-Language") and frappe.session.user == "Guest":
     # check if existing user and look for lang
     user = get_linked_user(id_type=medium, id=medium_id)
-    user_lang = None
     if user:
       user_lang = frappe.db.get_value("User", user, "language")
-    if frappe.db.exists("Language", lang):
-      frappe.local.lang = lang
-    elif user_lang:
-      frappe.local.lang = user_lang
+      if user_lang:
+        frappe.local.lang = user_lang
 
   # generate a pin
   otp = frappe.safe_decode(str(get_otp()))
@@ -74,7 +79,7 @@ def generate_otp(medium="sms", medium_id=None, sms_hash=None, purpose="login", l
     sms_otp_template = frappe.db.get_value(
         "System Settings", None, "sms_otp_template")
     if not sms_otp_template:
-      frappe.throw("Please set SMS OTP Template in System Settings")
+      frappe.throw(_("Please set SMS OTP Template in System Settings"))
     sms_otp_template = frappe.get_doc("SMS Template", sms_otp_template)
     render_params = frappe._dict(
         otp=otp,
@@ -94,7 +99,7 @@ def generate_otp(medium="sms", medium_id=None, sms_hash=None, purpose="login", l
     email_otp_template = frappe.db.get_value(
         "System Settings", None, "email_otp_template")
     if not email_otp_template:
-      frappe.throw("Please set Email OTP Template in System Settings")
+      frappe.throw(_("Please set Email OTP Template in System Settings"))
     email_otp_template = frappe.get_doc("Email Template", email_otp_template)
     render_params = frappe._dict(
         otp=otp,
@@ -120,6 +125,9 @@ def generate_otp(medium="sms", medium_id=None, sms_hash=None, purpose="login", l
       status = "success"
     except frappe.OutgoingEmailError:
       status = "fail"
+
+  # set back the original language
+  frappe.local.lang = original_lang
 
   return frappe._dict({"status": status, medium: medium_id})
 
