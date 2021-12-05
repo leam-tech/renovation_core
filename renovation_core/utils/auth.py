@@ -44,7 +44,7 @@ def generate_otp(medium="sms", medium_id=None, sms_hash=None, purpose="login", l
 
   original_lang = frappe.local.lang
 
-
+  user = None
   if lang:
     lang = frappe.db.exists("Language", lang)
     if lang:
