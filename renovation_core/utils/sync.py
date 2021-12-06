@@ -4,6 +4,8 @@ import frappe
 
 
 def _get_doc_files(files, start_path, force=0, sync_everything=False, verbose=False):
+  if not files:
+    files = []
   """walk and sync all doctypes and pages"""
 
   # load in sequence - warning for devs
@@ -23,6 +25,7 @@ def _get_doc_files(files, start_path, force=0, sync_everything=False, verbose=Fa
           if os.path.exists(doc_path):
             if not doc_path in files:
               files.append(doc_path)
+  return files
 
 
 def process(self):
