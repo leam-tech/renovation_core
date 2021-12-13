@@ -4,7 +4,7 @@ import frappe
 
 
 def _get_doc_files(files, start_path, force=0, sync_everything=False, verbose=False):
-  if not files:
+  if files is None:
     files = []
   """walk and sync all doctypes and pages"""
 
