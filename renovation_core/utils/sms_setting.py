@@ -61,7 +61,7 @@ def send_sms(receiver_list, msg, sender_name='', success_msg=True, provider=None
 
 def get_default_sms_providers():
   system_settings = frappe.get_single("System Settings")
-  return system_settings.sms_providers or [frappe._dict(provider=system_settings.sms_settings)]
+  return system_settings.sms_providers
 
 
 def send_via_gateway(arg, providers):
