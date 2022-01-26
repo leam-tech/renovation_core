@@ -10,8 +10,6 @@ from frappe.utils import cint, get_url, get_datetime
 from frappe.utils.password import check_password, passlibctx, update_password
 from renovation_core.utils import update_http_response
 
-from .sms_setting import send_sms
-
 
 @frappe.whitelist(allow_guest=True)
 def generate_otp(medium="sms", medium_id=None, sms_hash=None, purpose="login", lang=None):
@@ -35,7 +33,7 @@ def generate_otp(medium="sms", medium_id=None, sms_hash=None, purpose="login", l
   2. Accept-Language header or from frappe.session.user (done by frappe )
   3. is user exists from medium_id (email or mobile) ie user.lang (ie Guest Users)
   """
-
+  from .sms_setting import send_sms
   if medium not in ("sms", "email"):
     frappe.throw(_("medium can only be 'sms' or 'email'"))
 
