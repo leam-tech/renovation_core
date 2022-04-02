@@ -26,6 +26,7 @@ class BroadcastMessage(Document):
       elif t.type == "FCM Topic" and not t.fcm_topic:
         frappe.throw("FCM Topic is mandatory")
 
+  @frappe.whitelist()
   def send(self):
 
     t = frappe._dict(
