@@ -1,0 +1,18 @@
+include MANIFEST.in
+include requirements.txt
+include *.json
+include *.md
+include *.py
+include *.txt
+recursive-include renovation_frappe *.css
+recursive-include renovation_frappe *.csv
+recursive-include renovation_frappe *.html
+recursive-include renovation_frappe *.ico
+recursive-include renovation_frappe *.js
+recursive-include renovation_frappe *.json
+recursive-include renovation_frappe *.md
+recursive-include renovation_frappe *.png
+recursive-include renovation_frappe *.py
+recursive-include renovation_frappe *.svg
+recursive-include renovation_frappe *.txt
+recursive-exclude renovation_frappe *.pyc

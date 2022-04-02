@@ -1,0 +1,6 @@
+# frappe -- https://github.com/frappe/frappe is installed via 'bench init'
+python-multipart==0.0.5
+werkzeug==2.0.3 # Required for ContextVar based Locals
+asyncer==0.0.1
+pymysql-pool==0.3.5 # PyMysql Connection Pool
+graphql-core==3.2.0
