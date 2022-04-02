@@ -1,4 +1,5 @@
 # frappe -- https://github.com/frappe/frappe is installed via 'bench init'
+fastapi==0.74.1
 python-multipart==0.0.5
 werkzeug==2.0.3 # Required for ContextVar based Locals
 asyncer==0.0.1
