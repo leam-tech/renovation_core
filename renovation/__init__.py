@@ -2,13 +2,15 @@
 __version__ = '0.0.1'
 
 from werkzeug.local import LocalProxy
+from asyncer import asyncify
 
 from .orm import Field, Column  # noqa
 from .model import FrappeModel as RenovationModel  # noqa
 
 # Useful utilities
-from frappe import (local, _, parse_json, _dict, get_module, get_roles, get_meta,  # noqa
-     get_hooks, get_traceback, scrub, set_user, has_permission, whitelist, is_whitelisted)  # noqa
+from frappe import (local, _, parse_json, as_json, _dict, get_module, get_roles, get_meta,  # noqa
+     get_hooks, get_traceback, scrub, set_user, has_permission, whitelist, is_whitelisted,  # noqa
+     get_doc as frappe_get_doc)  # noqa
 from frappe.utils import cint, flt  # noqa
 
 
@@ -22,6 +24,10 @@ def get_attr(method_string):
     modulename = '.'.join(method_string.split('.')[:-1])
     methodname = method_string.split('.')[-1]
     return getattr(get_module(modulename), methodname)
+
+
+async def get_doc(*args, **kwargs):
+    return asyncify(frappe_get_doc)(*args, **kwargs)
 
 
 user = LocalProxy(lambda: local.session.user)
