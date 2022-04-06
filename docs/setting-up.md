@@ -8,7 +8,7 @@ $ git clone git@github.com:leam-tech/renovation_core --branch v2 ./apps/renovati
 $ . ./env/bin/activate
 
 # Install via pip
-(env) $ pip install -e ./renovation_core_v2
+(env) $ pip install -e ./apps/renovation_core_v2
 
 # Add renovation_core to apps.txt
 (env) $ echo -e -n '\nrenovation_core' >> ./sites/apps.txt
