@@ -1,13 +1,23 @@
 import base64
-from graphql import GraphQLResolveInfo, GraphQLError
+from typing import TypedDict, Optional, Any
+from asyncer import asyncify
 
 import frappe
+
+
+class CursorPaginatorExecutionArgs(TypedDict):
+    before: Optional[str]
+    after: Optional[str]
+    first: Optional[int]
+    last: Optional[int]
+    sort_by: Optional[str]
+    filters: Optional[Any]
 
 
 class CursorPaginator(object):
     def __init__(
             self,
-            doctype,
+            model,
             filters=None,
             skip_process_filters=False,
             count_resolver=None,
@@ -20,7 +30,7 @@ class CursorPaginator(object):
             frappe.throw(
                 "Please provide both count_resolver & node_resolver to have custom implementation")
 
-        self.doctype = doctype
+        self.doctype = model
         self.predefined_filters = filters
         self.skip_process_filters = skip_process_filters
         self.custom_count_resolver = count_resolver
@@ -31,25 +41,22 @@ class CursorPaginator(object):
         # Extra Args are helpful for custom resolvers
         self.extra_args = extra_args
 
-    def resolve(self, obj, info: GraphQLResolveInfo, **kwargs):
+    async def execute(self, args: CursorPaginatorExecutionArgs):
 
-        self.validate_connection_args(kwargs)
-
-        self.resolve_obj = obj
-        self.resolve_info = info
-        self.resolve_kwargs = kwargs
+        self.validate_connection_args(args)
 
         self.has_next_page = False
         self.has_previous_page = False
-        self.before = kwargs.get("before")
-        self.after = kwargs.get("after")
-        self.first = kwargs.get("first")
-        self.last = kwargs.get("last")
 
-        self.filters = kwargs.get("filter") or []
+        self.before = args.get("before")
+        self.after = args.get("after")
+        self.first = args.get("first")
+        self.last = args.get("last")
+
+        self.filters = args.get("filter") or []
         self.filters.extend(self.predefined_filters or [])
 
-        self.sorting_fields, self.sort_dir = self.get_sort_args(kwargs.get("sortBy"))
+        self.sorting_fields, self.sort_dir = self.get_sort_args(args.get("sortBy"))
 
         self.original_sort_dir = self.sort_dir
         if self.last:
@@ -65,14 +72,16 @@ class CursorPaginator(object):
         if not self.skip_process_filters:
             self.filters = self.process_filters(self.filters)
 
-        count = self.get_count(self.doctype, self.filters)
+        count = await self.get_count(self.doctype, self.filters)
 
         if self.cursor:
             # Cursor filter should be applied after taking count
             self.has_previous_page = True
             self.filters.append(self.get_cursor_filter())
 
-        data = self.get_data(self.doctype, self.filters, self.sorting_fields, self.sort_dir, limit)
+        data = await self.get_data(
+            self.doctype, self.filters, self.sorting_fields, self.sort_dir, limit)
+
         matched_count = len(data)
         if matched_count > requested_count:
             self.has_next_page = True
@@ -100,39 +109,39 @@ class CursorPaginator(object):
             edges=edges
         )
 
-    def validate_connection_args(self, args):
+    def validate_connection_args(self, args: CursorPaginatorExecutionArgs):
         first = args.get("first")
         last = args.get("last")
 
         if not first and not last:
-            raise GraphQLError("Argument `first` or `last` should be specified")
+            raise Exception("Argument `first` or `last` should be specified")
         if first and not (isinstance(first, int) and first > 0):
-            raise GraphQLError("Argument `first` must be a non-negative integer.")
+            raise Exception("Argument `first` must be a non-negative integer.")
         if last and not (isinstance(last, int) and last > 0):
-            raise GraphQLError("Argument `last` must be a non-negative integer.")
+            raise Exception("Argument `last` must be a non-negative integer.")
         if first and last:
-            raise GraphQLError("Argument `last` cannot be combined with `first`.")
+            raise Exception("Argument `last` cannot be combined with `first`.")
         if first and args.get("before"):
-            raise GraphQLError("Argument `first` cannot be combined with `before`.")
+            raise Exception("Argument `first` cannot be combined with `before`.")
         if last and args.get("after"):
-            raise GraphQLError("Argument `last` cannot be combined with `after`.")
+            raise Exception("Argument `last` cannot be combined with `after`.")
 
-    def get_count(self, doctype, filters):
+    async def get_count(self, doctype, filters):
         if self.custom_count_resolver:
-            return self.custom_count_resolver(
+            return await self.custom_count_resolver(
                 paginator=self,
                 filters=filters
             )
 
-        return frappe.get_list(
+        return (await asyncify(frappe.get_list)(
             doctype,
             fields=["COUNT(*) as total_count"],
             filters=filters
-        )[0].total_count
+        ))[0].total_count
 
-    def get_data(self, doctype, filters, sorting_fields, sort_dir, limit):
+    async def get_data(self, doctype, filters, sorting_fields, sort_dir, limit):
         if self.custom_node_resolver:
-            return self.custom_node_resolver(
+            return await self.custom_node_resolver(
                 paginator=self,
                 filters=filters,
                 sorting_fields=sorting_fields,
@@ -140,7 +149,7 @@ class CursorPaginator(object):
                 limit=limit
             )
 
-        return frappe.get_list(
+        return await asyncify(frappe.get_list)(
             doctype,
             fields=["name", f"SUBSTR(\".{doctype}\", 2) as doctype"] + sorting_fields,
             filters=filters,
@@ -270,7 +279,8 @@ class CursorPaginator(object):
                         sorting_fields=sorting_fields[1:], values=values[1:])
 
                 if sub_condition:
-                    return f"(({format_column_name(sorting_fields[0])} IS NULL AND {sub_condition})" \
+                    return f"(({format_column_name(sorting_fields[0])} IS NULL" \
+                        + "AND {sub_condition})" \
                         + f" OR {format_column_name(sorting_fields[0])} IS NOT NULL)"
                 return ""
 
