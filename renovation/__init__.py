@@ -10,7 +10,7 @@ from .model import FrappeModel as RenovationModel  # noqa
 # Useful utilities
 from frappe import (local, _, parse_json, as_json, _dict, get_module, get_roles, get_meta,  # noqa
      get_hooks, get_traceback, scrub, set_user, has_permission, whitelist, is_whitelisted,  # noqa
-     get_doc as frappe_get_doc, cache)  # noqa
+     get_doc as frappe_get_doc, cache, generate_hash)  # noqa
 from frappe.utils import cint, flt  # noqa
 
 
