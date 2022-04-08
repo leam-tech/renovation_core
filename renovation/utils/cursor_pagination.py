@@ -152,7 +152,7 @@ class CursorPaginator(object):
                 limit=limit
             )
 
-        _fields = set([f"SUBSTR(\".{doctype}\", 2) as doctype"])
+        _fields = set()
         if not (fields == "*" or fields == ["*"]):
             _fields.update(fields)
             _fields.add("name")
@@ -160,9 +160,13 @@ class CursorPaginator(object):
         else:
             _fields.add("*")
 
+        _fields = list(_fields)
+        # it is mandatory that this comes after '*'
+        _fields.append(f"SUBSTR(\".{doctype}\", 2) as doctype")
+
         return await asyncify(frappe.get_all)(
             doctype,
-            fields=list(_fields),
+            fields=_fields,
             filters=filters,
             order_by=f"{', '.join([f'{x} {sort_dir}' for x in sorting_fields])}",
             limit_page_length=limit
