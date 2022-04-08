@@ -5,3 +5,4 @@ werkzeug==2.0.3 # Required for ContextVar based Locals
 asyncer==0.0.1
 pymysql-pool==0.3.5 # PyMysql Connection Pool
 graphql-core==3.2.0
+aiodataloader==0.2.1
