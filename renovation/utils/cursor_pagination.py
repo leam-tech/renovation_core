@@ -19,6 +19,7 @@ class CursorPaginator(object):
             self,
             model,
             filters=None,
+            fields=None,
             skip_process_filters=False,
             count_resolver=None,
             node_resolver=None,
@@ -31,6 +32,7 @@ class CursorPaginator(object):
                 "Please provide both count_resolver & node_resolver to have custom implementation")
 
         self.doctype = model
+        self.fields = fields
         self.predefined_filters = filters
         self.skip_process_filters = skip_process_filters
         self.custom_count_resolver = count_resolver
@@ -80,7 +82,7 @@ class CursorPaginator(object):
             self.filters.append(self.get_cursor_filter())
 
         data = await self.get_data(
-            self.doctype, self.filters, self.sorting_fields, self.sort_dir, limit)
+            self.doctype, self.filters, self.fields, self.sorting_fields, self.sort_dir, limit)
 
         matched_count = len(data)
         if matched_count > requested_count:
@@ -139,19 +141,28 @@ class CursorPaginator(object):
             filters=filters
         ))[0].total_count
 
-    async def get_data(self, doctype, filters, sorting_fields, sort_dir, limit):
+    async def get_data(self, doctype, filters, fields, sorting_fields, sort_dir, limit):
         if self.custom_node_resolver:
             return await self.custom_node_resolver(
                 paginator=self,
                 filters=filters,
+                fields=fields,
                 sorting_fields=sorting_fields,
                 sort_dir=sort_dir,
                 limit=limit
             )
 
-        return await asyncify(frappe.get_list)(
+        _fields = set([f"SUBSTR(\".{doctype}\", 2) as doctype"])
+        if not (fields == "*" or fields == ["*"]):
+            _fields.update(fields)
+            _fields.add("name")
+            _fields.update(sorting_fields or [])
+        else:
+            _fields.add("*")
+
+        return await asyncify(frappe.get_all)(
             doctype,
-            fields=["name", f"SUBSTR(\".{doctype}\", 2) as doctype"] + sorting_fields,
+            fields=list(_fields),
             filters=filters,
             order_by=f"{', '.join([f'{x} {sort_dir}' for x in sorting_fields])}",
             limit_page_length=limit
