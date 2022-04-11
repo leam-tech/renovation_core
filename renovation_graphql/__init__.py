@@ -64,11 +64,16 @@ async def log_error(query, variables, operation_name, output):
             + f"{''.join(tb.format_exception(exc, exc, exc.__traceback__))}"
         )
 
-    tracebacks.append(f"Frappe Traceback: \n{renovation.get_traceback()}")
+    frappe_traceback = renovation.get_traceback()
+    if frappe_traceback:
+        tracebacks.append(f"Frappe Traceback: \n{frappe_traceback}")
 
-    tracebacks = "\n==========================================\n".join(tracebacks)
-    if renovation.local.conf.get("developer_mode"):
-        print(tracebacks)
+    if len(tracebacks):
+        _error_info = "Traceback:\n" + "\n==========================================\n".join(tracebacks)
+        if renovation.local.conf.get("developer_mode"):
+            print(_error_info)
+    else:
+        _error_info = "Response:\n" + renovation.as_json(output)
 
     variables = get_masked_variables(query=query, variables=variables)
     operation_name = get_operation_name(query=query, operation_name=operation_name)
@@ -84,8 +89,7 @@ Query:
 Variables:
 {variables}
 
-Traceback:
-{tracebacks}
+{_error_info}
     """
     await asyncify(error_log.insert)(ignore_permissions=True)
 
