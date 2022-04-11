@@ -4,6 +4,7 @@ import graphql
 from graphql import GraphQLError, parse, GraphQLSyntaxError
 
 import renovation
+from .http import get_masked_variables, get_operation_name
 
 
 async def graphql_resolver(body: dict):
@@ -13,7 +14,7 @@ async def graphql_resolver(body: dict):
     operation_name = graphql_request.operationName
     output = await execute(query, variables, operation_name)
     if len(output.get("errors", [])):
-        log_error(query, variables, operation_name, output)
+        await log_error(query, variables, operation_name, output)
         errors = []
         for err in output.errors:
             if isinstance(err, GraphQLError):
@@ -43,8 +44,11 @@ async def execute(query=None, variables=None, operation_name=None):
     return output
 
 
-def log_error(query, variables, operation_name, output):
+async def log_error(query, variables, operation_name, output):
     import traceback as tb
+    import frappe
+    from asyncer import asyncify
+
     tracebacks = []
     for idx, err in enumerate(output.errors):
         if not isinstance(err, GraphQLError):
@@ -60,11 +64,34 @@ def log_error(query, variables, operation_name, output):
             + f"{''.join(tb.format_exception(exc, exc, exc.__traceback__))}"
         )
 
-    tracebacks.append(f"Frappe Traceback: \n{renovation.get_traceback()}")
+    frappe_traceback = renovation.get_traceback()
+    if frappe_traceback:
+        tracebacks.append(f"Frappe Traceback: \n{frappe_traceback}")
 
-    tracebacks = "\n==========================================\n".join(tracebacks)
-    if renovation.local.conf.get("developer_mode"):
-        print(tracebacks)
+    if len(tracebacks):
+        _error_info = "Traceback:\n" + "\n==========================================\n".join(tracebacks)
+        if renovation.local.conf.get("developer_mode"):
+            print(_error_info)
+    else:
+        _error_info = "Response:\n" + renovation.as_json(output)
+
+    variables = get_masked_variables(query=query, variables=variables)
+    operation_name = get_operation_name(query=query, operation_name=operation_name)
+
+    error_log = frappe.new_doc("Error Log")
+    error_log.method = f"GraphQL Error: {operation_name}"
+    error_log.error = f"""
+OperationName: {operation_name}
+
+Query:
+{query}
+
+Variables:
+{variables}
+
+{_error_info}
+    """
+    await asyncify(error_log.insert)(ignore_permissions=True)
 
 
 graphql_schemas = {}
