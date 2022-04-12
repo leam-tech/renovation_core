@@ -43,7 +43,7 @@ def _connect(site=None, db_name=None, set_admin_as_user=True):
         frappe.init(site)
 
     frappe.local.db = get_db(user=db_name or frappe.local.conf.db_name)
-    obtain_pool_connection(frappe.local.db)
+    # obtain_pool_connection(frappe.local.db)
     thread_safe_db(frappe.local.db)
     if set_admin_as_user:
         frappe.set_user("Administrator")
@@ -51,8 +51,8 @@ def _connect(site=None, db_name=None, set_admin_as_user=True):
 
 # The following two overrides exists
 # Since we use frappe.app.init_request (which invokes TWO DB Connections o.O FRAPPE BUG)
-# frappe.auth.HTTPRequest.connect = lambda *args, **kwargs: None
-# frappe.connect = _connect
+frappe.auth.HTTPRequest.connect = lambda *args, **kwargs: None
+frappe.connect = _connect
 
 
 class FrappeMiddleware:
