@@ -19,7 +19,7 @@ def get_model_dataloader(model: Union[RenovationModel, str]) -> DataLoader:
         return loader
 
     loader = DocTypeDataLoader(doctype=doctype)
-    renovation.local.dataloaders[doctype] = loader
+    _set_loader_in_locals(doctype, loader)
     return loader
 
 
@@ -46,8 +46,7 @@ def get_child_table_dataloader(
         parent_dt=parent_dt,
         parent_field=parent_field,
     )
-
-    renovation.local.dataloaders[locals_key] = loader
+    _set_loader_in_locals(locals_key, loader)
     return loader
 
 
@@ -57,6 +56,13 @@ def _get_loader_from_locals(key: Union[str, Tuple[str]]):
 
     if key in renovation.local.dataloaders:
         return renovation.local.dataloaders.get(key)
+
+
+def _set_loader_in_locals(key: Union[str, Tuple[str]], loader: DataLoader):
+    if not hasattr(renovation.local, "dataloaders"):
+        renovation.local.dataloaders = renovation._dict()
+
+    renovation.local.dataloaders[key] = loader
 
 
 class DocTypeDataLoader(DataLoader):
