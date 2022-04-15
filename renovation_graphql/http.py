@@ -10,7 +10,7 @@ def get_masked_variables(query, variables):
     if isinstance(variables, str):
         variables = renovation.parse_json(variables)
 
-    variables = renovation._dict(variables)
+    variables = renovation._dict(variables or dict())
     try:
         document = parse(query)
         for operation_definition in (getattr(document, "definitions", None) or []):
