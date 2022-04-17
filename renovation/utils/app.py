@@ -77,6 +77,7 @@ def get_renovation_apps():
 
 
 def is_renovation_frappe_app(frappe_app: str):
+    load_renovation_app_info()
     info = get_renovation_app_info()
     if not info:
         return False
