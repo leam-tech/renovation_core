@@ -27,7 +27,7 @@ def get_attr(method_string):
 
 
 async def get_doc(*args, **kwargs):
-    return asyncify(frappe_get_doc)(*args, **kwargs)
+    return await asyncify(frappe_get_doc)(*args, **kwargs)
 
 
 user = LocalProxy(lambda: local.session.user)
