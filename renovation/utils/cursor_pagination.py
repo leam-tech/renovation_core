@@ -1,5 +1,6 @@
 import base64
-from typing import TypedDict, Optional, Any
+from typing import Any, Optional, TypedDict
+
 from asyncer import asyncify
 
 import frappe
@@ -55,7 +56,7 @@ class CursorPaginator(object):
         self.first = args.get("first")
         self.last = args.get("last")
 
-        self.filters = args.get("filter") or []
+        self.filters = args.get("filters") or []
         self.filters.extend(self.predefined_filters or [])
 
         self.sorting_fields, self.sort_dir = self.get_sort_args(args.get("sortBy"))
