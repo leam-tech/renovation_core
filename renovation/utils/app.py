@@ -5,7 +5,6 @@ import json
 
 
 def load_renovation_app_info():
-
     if getattr(frappe.local, "loading_app_info", None):
         # This is to prevent double loads
         return frappe.cache().get_value("renovation_app_info")
@@ -17,7 +16,7 @@ def load_renovation_app_info():
         frappe_app_map=frappe._dict()
     )
 
-    for app in frappe.get_installed_apps():
+    for app in frappe.get_installed_apps(sort=True):
         renovation_app = getattr(frappe.get_module(app + ".hooks"), "renovation_app", None)
         if not renovation_app:
             continue
