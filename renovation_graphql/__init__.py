@@ -1,7 +1,8 @@
 import os
 from typing import Generator
+
 import graphql
-from graphql import GraphQLError, parse, GraphQLSyntaxError
+from graphql import GraphQLError, GraphQLSyntaxError, parse
 
 import renovation
 from .http import get_masked_variables, get_operation_name
@@ -10,7 +11,7 @@ from .http import get_masked_variables, get_operation_name
 async def graphql_resolver(body: dict):
     if isinstance(body, str):
         body = renovation.parse_json(body)
-
+    body = renovation._dict(body)
     query = body.query
     variables = body.variables
     operation_name = body.operationName
@@ -72,7 +73,7 @@ async def log_error(query, variables, operation_name, output):
 
     if len(tracebacks):
         _error_info = "Traceback:\n" + \
-            "\n==========================================\n".join(tracebacks)
+                      "\n==========================================\n".join(tracebacks)
         if renovation.local.conf.get("developer_mode"):
             print(_error_info)
     else:
