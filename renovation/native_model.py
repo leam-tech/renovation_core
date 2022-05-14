@@ -1,16 +1,8 @@
 from asyncer import asyncify
-from typing import Optional
+from typing import Optional, List
 
 import frappe
 from frappe.model.document import Document
-
-
-async def get_frappe_doc(doctype: str, name: str):
-    """
-    Returns a wrapped FrappeDocType
-    """
-    doc = await asyncify(frappe.get_doc)(doctype, name)
-    return FrappeDocType(doc=doc)
 
 
 class FrappeDocType:
@@ -60,3 +52,39 @@ class FrappeDocType:
 
     async def db_set(self, *args, **kwargs):
         return await asyncify(self._doc.db_set)(*args, **kwargs)
+
+    @classmethod
+    async def get_doc(cls, doctype: str, docname: str):
+        """
+        Returns a wrapped FrappeDocType
+        """
+        doc = await asyncify(frappe.get_doc)(doctype, docname)
+        return cls(doc=doc)
+
+    @classmethod
+    async def get_all(
+            cls,
+            doctype: str,
+            filters: dict = None,
+            fields: List[str] = ["name"],
+            offset: int = 0,
+            count: int = 10,
+            order_by: str = None) -> List[dict]:
+        return await asyncify(frappe.get_all)(
+            doctype, filters=filters, fields=fields, limit_start=offset,
+            limit_page_length=count, order_by=order_by)
+
+    @classmethod
+    async def db_set_value(cls, doctype: str, docname: str, fieldname: str, value):
+        return await asyncify(frappe.db.set_value)(
+            doctype, docname, fieldname, value)
+
+    @classmethod
+    async def db_get_value(cls, doctype: str, docname: str, fieldname: str = "name", as_dict=None):
+        return await asyncify(frappe.db.get_value)(
+            doctype, docname, fieldname, as_dict=as_dict
+        )
+
+    @classmethod
+    async def exists(cls, doctype: str, docname: str,):
+        return await asyncify(frappe.db.exists)(doctype, docname)
