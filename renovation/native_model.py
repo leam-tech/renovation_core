@@ -86,5 +86,5 @@ class FrappeDocType:
         )
 
     @classmethod
-    async def exists(cls, doctype: str, docname: str,):
+    async def exists(cls, doctype: str, docname: str):
         return await asyncify(frappe.db.exists)(doctype, docname)
