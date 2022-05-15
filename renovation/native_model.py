@@ -66,10 +66,14 @@ class FrappeDocType:
             cls,
             doctype: str,
             filters: dict = None,
-            fields: List[str] = ["name"],
+            fields: List[str] = None,
             offset: int = 0,
             count: int = 10,
             order_by: str = None) -> List[dict]:
+        
+        if not fields:
+            fields = ["name"]
+
         return await asyncify(frappe.get_all)(
             doctype, filters=filters, fields=fields, limit_start=offset,
             limit_page_length=count, order_by=order_by)
