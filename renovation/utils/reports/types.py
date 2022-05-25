@@ -13,3 +13,4 @@ class ReportColumn:
 class ReportResult(renovation._dict):
     result: List[List[Any]]
     columns: List[ReportColumn]
+    add_total_row: bool
