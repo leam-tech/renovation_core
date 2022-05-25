@@ -43,7 +43,7 @@ class ReportFixtures(FrappeTestFixture):
     TRANSACTION_LOG_REPORT = "Transaction Log Report"
     DOCUMENT_SHARE_REPORT = "Document Share Report"
     PERMITTED_DOCUMENTS_FOR_USER = "Permitted Documents For User"
-    ADDRESS_AND_CONTACTS = "Addresses And Contacts"
+    ADDRESSES_AND_CONTACTS = "Addresses And Contacts"
     TODO = "ToDo"
     WEBSITE_ANALYTICS = "Website Analytics"
 
@@ -51,7 +51,7 @@ class ReportFixtures(FrappeTestFixture):
         TRANSACTION_LOG_REPORT,
         DOCUMENT_SHARE_REPORT,
         PERMITTED_DOCUMENTS_FOR_USER,
-        ADDRESS_AND_CONTACTS,
+        ADDRESSES_AND_CONTACTS,
         TODO,
         WEBSITE_ANALYTICS
     ]
@@ -65,7 +65,16 @@ class ReportFixtures(FrappeTestFixture):
         We will add the STANDARD_REPORTS as fixtures
         """
         for report in self.STANDARD_REPORTS:
-            self.add_document(frappe.get_doc("Report", report))
+            if not frappe.db.exists("Report", report):
+                print(" !! Warning !!")
+                print(f"Standard Report: {report} not found\nPlease migrate site")
+
+            report_doc = frappe.get_doc("Report", report)
+            if report_doc.disabled:
+                # All our tests expects the STANDARD_REPORTS to be enabled by default
+                report_doc.db_set("disabled", 0)
+
+            self.add_document(report_doc)
 
     def delete_fixtures(self):
         """

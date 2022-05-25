@@ -1,6 +1,7 @@
 from unittest import TestCase
 from asyncer import runnify
 
+import frappe
 import renovation
 from renovation.utils.tests import UserFixtures
 
@@ -58,9 +59,9 @@ class TestGetAllReports(TestCase):
 
         # Make sure he gets intended reports
         report_names = [x.name for x in reports]
-        expected_reports = self.reports.STANDARD_REPORTS
+        expected_reports = list(self.reports.STANDARD_REPORTS)  # Clone
         # This report is only for few set of Roles. Please refer ./fixtures.py
-        expected_reports.remove(self.reports.ADDRESS_AND_CONTACTS)
+        expected_reports.remove(self.reports.ADDRESSES_AND_CONTACTS)
 
         self.assertTrue(all(x in report_names for x in expected_reports))
 
@@ -82,3 +83,38 @@ class TestGetAllReports(TestCase):
         # Make sure he gets intended reports
         report_names = [x.name for x in reports]
         self.assertCountEqual(report_names, [self.reports.WEBSITE_ANALYTICS])
+
+    @runnify
+    async def test_disabled_reports(self):
+        """
+        - Login as Administrator
+        - Ask for all reports
+        - Make sure report to be disabled exists
+        - Disable report TRANSACTION_LOG_REPORT
+        - Ask for all report
+        - Make sure disabled-report isn't returned
+        - Re-enable it
+        """
+        # Login as Administrator
+        renovation.set_user("Administrator")
+        _report = self.reports.TRANSACTION_LOG_REPORT
+
+        # Ask for all report
+        reports = await get_all_reports()
+
+        # Make sure report to be disabled exists
+        report_names = [x.name for x in reports]
+        self.assertIn(_report, report_names)
+
+        # Disable report TRANSACTION_LOG_REPORT
+        frappe.db.set_value("Report", self.reports.TRANSACTION_LOG_REPORT, "disabled", 1)
+
+        # Ask for all report
+        reports = await get_all_reports()
+
+        # Make sure disabled-report isn't returned
+        report_names = [x.name for x in reports]
+        self.assertNotIn(_report, report_names)
+
+        # Re-enable it
+        frappe.db.set_value("Report", self.reports.TRANSACTION_LOG_REPORT, "disabled", 0)
