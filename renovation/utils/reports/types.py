@@ -1,5 +1,22 @@
 from typing import Any, List
+from enum import Enum
+
 import renovation
+
+
+class ReportElementFieldType(Enum):
+    CHECK = "Check"
+    CURRENCY = "Currency"
+    DATA = "Data"
+    DATE = "Date"
+    DATETIME = "Datetime"
+    DYNAMIC = "Dynamic"
+    FLOAT = "Float"
+    FOLD = "Fold"
+    INT = "Int"
+    LINK = "Link"
+    SELECT = "Select"
+    TIME = "Time"
 
 
 class ReportColumn(renovation._dict):
