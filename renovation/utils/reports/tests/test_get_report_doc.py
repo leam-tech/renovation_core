@@ -6,8 +6,8 @@ import renovation
 from renovation.utils.tests import UserFixtures
 
 from .fixtures import ReportFixtures
-from ..get_report_doc import get_report_doc
-from ..exceptions import NotFound, PermissionError
+from ..get_doc import get_report_doc
+from ..exceptions import NotFound, PermissionError, ReportDisabled
 
 
 class TestGetReportDoc(TestCase):
@@ -84,8 +84,7 @@ class TestGetReportDoc(TestCase):
         - Ask for report doc
         - Make sure report to be disabled is obtained
         - Disable the report
-        - Ask for it again
-        - Make sure disabled-report is obtained as previously
+        - Ask for it again and make sure ReportDisabled is raised
         - Re-enable it
         """
 
@@ -104,13 +103,9 @@ class TestGetReportDoc(TestCase):
         # Disable the report
         frappe.db.set_value("Report", _report, "disabled", 1)
 
-        # Ask for it again
-        report_doc = await get_report_doc(_report)
-
-        # Make sure disabled-report is obtained as previously
-        self.assertIsNotNone(report_doc)
-        self.assertEqual(report_doc.doctype, "Report")
-        self.assertEqual(report_doc.name, _report)
+        #  Ask for it again and make sure ReportDisabled is raised
+        with self.assertRaises(ReportDisabled):
+            await get_report_doc(_report)
 
         # Re-enable it
         frappe.db.set_value("Report", _report, "disabled", 0)

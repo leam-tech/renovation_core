@@ -25,3 +25,11 @@ class PermissionError(ReportError):
         self.message = renovation._("Permission Denied for Report: {0}").format(report)
         self.error_code = "PERMISSION_DENIED"
         self.data = renovation._dict(report=report)
+
+
+class ReportDisabled(ReportError):
+    def __init__(self, report: str):
+        self.http_status_code = 400
+        self.message = renovation._("Disabled Report: {0}").format(report)
+        self.error_code = "REPORT_DISABLED"
+        self.data = renovation._dict(report=report)

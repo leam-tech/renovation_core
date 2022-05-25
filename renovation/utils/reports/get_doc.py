@@ -3,7 +3,7 @@ from asyncer import asyncify
 import frappe
 
 import renovation
-from .exceptions import PermissionError, NotFound
+from .exceptions import PermissionError, NotFound, ReportDisabled
 
 
 async def get_report_doc(report: str) -> dict:
@@ -21,5 +21,9 @@ async def get_report_doc(report: str) -> dict:
 
     if not len(common_roles):
         raise PermissionError(report=report)
+
+    # Validate Disabled
+    if report_doc.disabled:
+        raise ReportDisabled(report=report)
 
     return report_doc
