@@ -107,7 +107,7 @@ class TestGetAllReports(TestCase):
         self.assertIn(_report, report_names)
 
         # Disable report TRANSACTION_LOG_REPORT
-        frappe.db.set_value("Report", self.reports.TRANSACTION_LOG_REPORT, "disabled", 1)
+        frappe.db.set_value("Report", _report, "disabled", 1)
 
         # Ask for all report
         reports = await get_all_reports()
@@ -117,4 +117,4 @@ class TestGetAllReports(TestCase):
         self.assertNotIn(_report, report_names)
 
         # Re-enable it
-        frappe.db.set_value("Report", self.reports.TRANSACTION_LOG_REPORT, "disabled", 0)
+        frappe.db.set_value("Report", _report, "disabled", 0)
