@@ -5,9 +5,10 @@ import frappe
 import renovation
 
 from .get_doc import get_report_doc
+from .types import ReportColumn, ReportResult
 
 
-async def get_report_data(report: str, filters: Union[List[dict], dict]):
+async def get_report_data(report: str, filters: Union[List[dict], dict]) -> ReportResult:
     """
     Async wrapper around Frappe's report runner
 
@@ -30,7 +31,7 @@ async def get_report_data(report: str, filters: Union[List[dict], dict]):
     data["columns"] = objectify_columns(data.get("columns"))
     data["result"] = array_result(data.get("columns"), data.get("result"))
 
-    return renovation._dict(data)
+    return ReportResult(data)
 
 
 def array_result(columns, result):
@@ -87,6 +88,7 @@ def objectify_columns(columns):
         if not col.fieldname:
             col.fieldname = frappe.scrub(label)
 
+        col = ReportColumn(col)
         cols.append(col)
 
     return cols

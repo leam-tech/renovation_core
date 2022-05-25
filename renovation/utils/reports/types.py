@@ -2,7 +2,7 @@ from typing import Any, List
 import renovation
 
 
-class ReportColumn:
+class ReportColumn(renovation._dict):
     fieldname: str
     label: str
     fieldtype: str

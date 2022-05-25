@@ -9,6 +9,7 @@ from renovation.utils.tests import UserFixtures
 from .fixtures import ReportFixtures
 from ..get_data import get_report_data
 from ..get_doc import get_report_doc
+from ..types import ReportColumn, ReportResult
 
 
 class TestGetReportData(TestCase):
@@ -47,12 +48,12 @@ class TestGetReportData(TestCase):
 
         # Ask for report on ToDo
         data = await get_report_data(report=_report, filters=dict())
-        self.assertIsInstance(data, dict)
+        self.assertIsInstance(data, ReportResult)
 
         # Verify columns
         self.assertIsInstance(data.columns, list)
         for col in data.columns:
-            self.assertIsInstance(col, dict)
+            self.assertIsInstance(col, ReportColumn)
             self.assertTrue(all(
                 x in col for x in [
                     "label", "width", "fieldtype", "fieldname"
