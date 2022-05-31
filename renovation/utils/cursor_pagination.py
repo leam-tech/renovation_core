@@ -20,6 +20,7 @@ class CursorPaginator(object):
             self,
             model,
             filters=None,
+            or_filters = None,
             fields=None,
             skip_process_filters=False,
             count_resolver=None,
@@ -35,6 +36,7 @@ class CursorPaginator(object):
         self.doctype = model
         self.fields = fields
         self.predefined_filters = filters
+        self.or_filters=or_filters
         self.skip_process_filters = skip_process_filters
         self.custom_count_resolver = count_resolver
         self.custom_node_resolver = node_resolver
@@ -139,7 +141,8 @@ class CursorPaginator(object):
         return (await asyncify(frappe.get_all)(
             doctype,
             fields=["COUNT(*) as total_count"],
-            filters=filters
+            filters=filters,
+            or_filters=self.or_filters
         ))[0].total_count
 
     async def get_data(self, doctype, filters, fields, sorting_fields, sort_dir, limit):
@@ -170,7 +173,8 @@ class CursorPaginator(object):
             fields=_fields,
             filters=filters,
             order_by=f"{', '.join([f'{x} {sort_dir}' for x in sorting_fields])}",
-            limit_page_length=limit
+            limit_page_length=limit,
+            or_filters=self.or_filters
         )
 
     def get_sort_args(self, sorting_input=None):
