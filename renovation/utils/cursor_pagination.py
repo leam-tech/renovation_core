@@ -136,7 +136,7 @@ class CursorPaginator(object):
                 filters=filters
             )
 
-        return (await asyncify(frappe.get_list)(
+        return (await asyncify(frappe.get_all)(
             doctype,
             fields=["COUNT(*) as total_count"],
             filters=filters
