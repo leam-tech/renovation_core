@@ -195,6 +195,10 @@ user_data_fields = [
     }
 ]
 
+graphql_sdl_dir = [
+    "/renovation_graphql/types",
+]
+
 # Authentication and authorization
 # --------------------------------
 
