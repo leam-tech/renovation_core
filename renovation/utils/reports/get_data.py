@@ -88,6 +88,9 @@ def objectify_columns(columns):
         if not col.fieldname:
             col.fieldname = frappe.scrub(label)
 
+        if not col.fieldtype:
+            col.fieldtype = "Data"
+
         col = ReportColumn(col)
         cols.append(col)
 
