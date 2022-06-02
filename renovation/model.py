@@ -162,7 +162,7 @@ class FrappeModel(Generic[T], Document):
 
         # parent
         if getattr(self.meta, "issingle", 0):
-            await self.update_single(self.get_valid_dict())
+            await asyncer.asyncify(self.update_single)(self.get_valid_dict())
         else:
             try:
                 await asyncer.asyncify(self.db_insert)()
