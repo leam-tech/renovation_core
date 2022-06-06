@@ -26,4 +26,17 @@ async def get_report_doc(report: str) -> dict:
     if report_doc.disabled:
         raise ReportDisabled(report=report)
 
+    for filter in report_doc.filters:
+        filter.default_value = parse_default_value(filter.get("default_value"))
+
     return report_doc
+
+
+def parse_default_value(template: str):
+    """
+    Template can have access to all frappe.utils.safe_exec methods
+    """
+    if not template:
+        return None
+
+    return frappe.render_template(template, {})

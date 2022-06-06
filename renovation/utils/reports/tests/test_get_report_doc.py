@@ -1,5 +1,7 @@
 from unittest import TestCase
+from unittest.mock import patch
 from asyncer import runnify
+
 import frappe
 
 import renovation
@@ -109,3 +111,50 @@ class TestGetReportDoc(TestCase):
 
         # Re-enable it
         frappe.db.set_value("Report", _report, "disabled", 0)
+
+    @runnify
+    async def test_report_filters(self):
+        """
+        Make sure filter.default_value gets parsed as intended
+        """
+
+        _report_doc = frappe.get_doc(dict(
+            doctype="Report",
+            name="random-report",
+            roles=[dict(role="System Manager")],
+            filters=[
+                # Today
+                dict(
+                    fieldname="df1",
+                    default_value="{{ frappe.utils.getdate() }}"),
+                # Today + 10 days
+                dict(
+                    fieldname="df2",
+                    default_value=(
+                        "{{ frappe.utils.add_to_date(date=frappe.utils.getdate(),"
+                        " days=10) }}")
+                ),
+                # No filter defined
+                dict(
+                    fieldname="df3",
+                ),
+            ]
+        ))
+
+        with patch("frappe.db.exists") as exists_patch:
+            exists_patch.return_value = True
+            with patch("frappe.get_doc") as get_doc_patch:
+                get_doc_patch.return_value = _report_doc
+
+                _report_doc = await get_report_doc(_report_doc.name)
+
+        # Assertion Time!
+        from frappe.utils import getdate, add_to_date, get_date_str
+        self.assertEqual(
+            [x.default_value for x in _report_doc.filters],
+            [
+                get_date_str(getdate()),
+                get_date_str(add_to_date(getdate(), days=10)),
+                None,
+            ]
+        )
