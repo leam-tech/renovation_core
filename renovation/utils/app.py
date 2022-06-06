@@ -5,6 +5,12 @@ import json
 
 
 def load_renovation_app_info():
+
+    if not frappe.local.site:
+        # This function calls get_installed_apps which
+        # requires frappe to be initialized with a site
+        return
+
     if getattr(frappe.local, "loading_app_info", None):
         # This is to prevent double loads
         return frappe.cache().get_value("renovation_app_info")
