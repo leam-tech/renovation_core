@@ -115,15 +115,7 @@ def get_schema():
 
 
 def get_typedefs():
-    schema = """
-    type Query {
-        ping: String
-    }
-
-    type Mutation {
-        ping: String
-    }
-    """
+    schema = ""
     for dir in renovation.get_hooks("graphql_sdl_dir"):
         """
         graphql_sdl_dir = "pms_app/graphql/types"
