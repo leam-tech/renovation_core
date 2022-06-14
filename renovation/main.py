@@ -19,7 +19,14 @@ def get_app():
             "settings": settings.as_dict(),
         }
 
-    frappe.init(site=os.environ.get("SITE_NAME", "test.localhost"))
+    # FastAPI-Routes are not properly multi tenanted
+    # This is assuming that all sites in the bench will share the same set of
+    # installed-apps
+    # eg. All sites in pms-clients-bench will have same set of apps and routes
+    # Hence, provide SAMPLE_SITE as one of the sites in bench for reading routes info
+    # This could be improved in the future with @renovation.api decorator
+    site = os.environ.get("SAMPLE_SITE", None) or os.environ.get("SITE_NAME", None)
+    frappe.init(site=site)
     info = load_renovation_app_info()
     frappe.destroy()
 

@@ -21,7 +21,10 @@ from frappe.middlewares import StaticDataMiddleware
 
 from renovation.utils.async_db import thread_safe_db, obtain_pool_connection
 
-frappe.app._site = os.environ.get("SITE_NAME", "test.localhost")
+if os.environ.get("SITE_NAME", None):
+    # Specifying ENV SITE_NAME makes it fixed site (not DNS Multi Tenant)
+    frappe.app._site = os.environ.get("SITE_NAME")
+
 frappe_application = SharedDataMiddleware(frappe.app.application, {
     str('/assets'): str(os.path.join(frappe.app._sites_path, 'assets'))
 })
@@ -163,7 +166,7 @@ async def make_wsgi_compatible(request: Request):
 
     r = WerkzeugRequest(environ=environ, populate_request=True, shallow=False)
 
-    r.host = request.client.host
+    r.host = request.headers.get("host")
     r.path = request.url.path
     r.scheme = request.url.scheme
 
