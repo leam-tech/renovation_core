@@ -61,7 +61,7 @@ class CursorPaginator(object):
         self.filters = args.get("filters") or []
         self.filters.extend(self.predefined_filters or [])
 
-        self.sorting_fields, self.sort_dir = self.get_sort_args(args.get("sortBy"))
+        self.sorting_fields, self.sort_dir = self.get_sort_args(args.get("sort_by"))
 
         self.original_sort_dir = self.sort_dir
         if self.last:
