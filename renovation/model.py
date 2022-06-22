@@ -2,6 +2,7 @@ import inspect
 from typing import Union, List, Optional, TypeVar, Generic
 
 import frappe
+import renovation
 from frappe.model.document import Document
 import asyncer
 import asyncio
@@ -107,7 +108,7 @@ class FrappeModel(Generic[T], Document):
         return frappe.db.count(cls.get_doctype(), filters=filters)
 
     @classmethod
-    async def exists(cls, doc_id: str):
+    async def exists(cls, doc_id: Union[dict, str]):
         return await asyncer.asyncify(frappe.db.exists)(cls.get_doctype(), doc_id)
 
     async def reload(self) -> T:
@@ -162,7 +163,7 @@ class FrappeModel(Generic[T], Document):
 
         # parent
         if getattr(self.meta, "issingle", 0):
-            await self.update_single(self.get_valid_dict())
+            await asyncer.asyncify(self.update_single)(self.get_valid_dict())
         else:
             try:
                 await asyncer.asyncify(self.db_insert)()

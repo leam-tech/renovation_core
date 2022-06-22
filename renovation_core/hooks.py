@@ -28,6 +28,14 @@ before_tests = "renovation_core.hooks._before_tests"
 def _before_tests():
     from renovation.utils.app import load_renovation_app_info
     load_renovation_app_info()
+
+
+fixtures = [
+    {"dt": "Custom Field", "filters": [["name", "in", [
+        "Report Filter-default_value"
+    ]]]}
+]
+
 # Includes in <head>
 # ------------------
 
@@ -193,6 +201,10 @@ user_data_fields = [
     {
         "doctype": "{doctype_4}"
     }
+]
+
+graphql_sdl_dir = [
+    "/renovation_graphql/types",
 ]
 
 # Authentication and authorization

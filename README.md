@@ -17,7 +17,7 @@ Renovation Frappe Framework
 - [Make your new app](./docs/new-app.md)
 - [Playing with DocTypes](./docs/doctypes.md)
 - FastAPI Endpoints in your app
-- Running in Development & Production
+- [Setting up Multi-Tenancy](./docs/multi-tenancy.md)
 - [Multi Threading (asyncer) and DB Connection](./docs/db-multithreaded.md)
 
 #### License

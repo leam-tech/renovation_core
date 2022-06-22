@@ -1,5 +1,6 @@
 import base64
-from typing import TypedDict, Optional, Any
+from typing import Any, Optional, TypedDict
+
 from asyncer import asyncify
 
 import frappe
@@ -19,6 +20,7 @@ class CursorPaginator(object):
             self,
             model,
             filters=None,
+            or_filters = None,
             fields=None,
             skip_process_filters=False,
             count_resolver=None,
@@ -34,6 +36,7 @@ class CursorPaginator(object):
         self.doctype = model
         self.fields = fields
         self.predefined_filters = filters
+        self.or_filters=or_filters
         self.skip_process_filters = skip_process_filters
         self.custom_count_resolver = count_resolver
         self.custom_node_resolver = node_resolver
@@ -55,10 +58,10 @@ class CursorPaginator(object):
         self.first = args.get("first")
         self.last = args.get("last")
 
-        self.filters = args.get("filter") or []
+        self.filters = args.get("filters") or []
         self.filters.extend(self.predefined_filters or [])
 
-        self.sorting_fields, self.sort_dir = self.get_sort_args(args.get("sortBy"))
+        self.sorting_fields, self.sort_dir = self.get_sort_args(args.get("sort_by"))
 
         self.original_sort_dir = self.sort_dir
         if self.last:
@@ -135,10 +138,11 @@ class CursorPaginator(object):
                 filters=filters
             )
 
-        return (await asyncify(frappe.get_list)(
+        return (await asyncify(frappe.get_all)(
             doctype,
             fields=["COUNT(*) as total_count"],
-            filters=filters
+            filters=filters,
+            or_filters=self.or_filters
         ))[0].total_count
 
     async def get_data(self, doctype, filters, fields, sorting_fields, sort_dir, limit):
@@ -169,7 +173,8 @@ class CursorPaginator(object):
             fields=_fields,
             filters=filters,
             order_by=f"{', '.join([f'{x} {sort_dir}' for x in sorting_fields])}",
-            limit_page_length=limit
+            limit_page_length=limit,
+            or_filters=self.or_filters
         )
 
     def get_sort_args(self, sorting_input=None):

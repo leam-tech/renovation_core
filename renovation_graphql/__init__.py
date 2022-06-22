@@ -1,17 +1,20 @@
 import os
 from typing import Generator
+
 import graphql
-from graphql import GraphQLError, parse, GraphQLSyntaxError
+from graphql import GraphQLError, GraphQLSyntaxError, parse
 
 import renovation
 from .http import get_masked_variables, get_operation_name
 
 
 async def graphql_resolver(body: dict):
-    graphql_request = renovation.parse_json(body)
-    query = graphql_request.query
-    variables = graphql_request.variables
-    operation_name = graphql_request.operationName
+    if isinstance(body, str):
+        body = renovation.parse_json(body)
+    body = renovation._dict(body)
+    query = body.query
+    variables = body.variables
+    operation_name = body.operationName
     output = await execute(query, variables, operation_name)
     if len(output.get("errors", [])):
         await log_error(query, variables, operation_name, output)
@@ -69,7 +72,8 @@ async def log_error(query, variables, operation_name, output):
         tracebacks.append(f"Frappe Traceback: \n{frappe_traceback}")
 
     if len(tracebacks):
-        _error_info = "Traceback:\n" + "\n==========================================\n".join(tracebacks)
+        _error_info = "Traceback:\n" + \
+                      "\n==========================================\n".join(tracebacks)
         if renovation.local.conf.get("developer_mode"):
             print(_error_info)
     else:
@@ -111,15 +115,7 @@ def get_schema():
 
 
 def get_typedefs():
-    schema = """
-    type Query {
-        ping: String
-    }
-
-    type Mutation {
-        ping: String
-    }
-    """
+    schema = ""
     for dir in renovation.get_hooks("graphql_sdl_dir"):
         """
         graphql_sdl_dir = "pms_app/graphql/types"
