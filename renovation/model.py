@@ -1,11 +1,11 @@
 import inspect
+import asyncer
+import asyncio
 from typing import Union, List, Optional, TypeVar, Generic
 
 import frappe
-import renovation
 from frappe.model.document import Document
-import asyncer
-import asyncio
+from frappe.utils.global_search import update_global_search
 
 T = TypeVar("T")
 
@@ -269,7 +269,7 @@ class FrappeModel(Generic[T], Document):
         self.clear_cache()
         self.notify_update()
 
-        # update_global_search(self)
+        await asyncer.asyncify(update_global_search)(self)
 
         await asyncer.asyncify(self.save_version)()
 
