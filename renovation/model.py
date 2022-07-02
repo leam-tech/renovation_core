@@ -97,15 +97,15 @@ class FrappeModel(Generic[T], Document):
         )
 
     @classmethod
-    def query(cls,
-              query: str,
-              values: Union[dict, tuple, list],
-              as_dict: bool = True) -> Union[dict, list]:
-        return frappe.db.sql(query, values, as_dict=as_dict)
+    async def query(cls,
+                    query: str,
+                    values: Union[dict, tuple, list],
+                    as_dict: bool = True) -> Union[dict, list]:
+        return await asyncer.asyncify(frappe.db.sql)(query, values, as_dict=as_dict)
 
     @classmethod
-    def get_count(cls, filters: dict) -> int:
-        return frappe.db.count(cls.get_doctype(), filters=filters)
+    async def get_count(cls, filters: dict) -> int:
+        return await asyncer.asyncify(frappe.db.count)(cls.get_doctype(), filters=filters)
 
     @classmethod
     async def exists(cls, doc_id: Union[dict, str]):
@@ -348,7 +348,7 @@ class FrappeModel(Generic[T], Document):
 
             doc_events = frappe.get_doc_hooks()
             for handler in doc_events.get(self.doctype, {}).get(method, []) \
-                    + doc_events.get("*", {}).get(method, []):
+                           + doc_events.get("*", {}).get(method, []):
                 hooks.append(frappe.get_attr(handler))
 
             composed = compose(f, *hooks)
