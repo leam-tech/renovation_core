@@ -8,12 +8,16 @@ from .get_doc import get_report_doc
 from .types import ReportColumn, ReportResult
 
 
-async def get_report_data(report: str, filters: Union[List[dict], dict]) -> ReportResult:
+async def get_report_data(
+        report: str,
+        filters: Union[List[dict], dict],
+        language: str = None) -> ReportResult:
     """
     Async wrapper around Frappe's report runner
 
     :report (str): The name of the report to execute
     :filters (str): set of filters to use for execution
+    :language (str): The language to return the report in
     """
     from frappe.desk.query_report import run as query_report
 
@@ -30,6 +34,13 @@ async def get_report_data(report: str, filters: Union[List[dict], dict]) -> Repo
 
     data["columns"] = objectify_columns(data.get("columns"))
     data["result"] = array_result(data.get("columns"), data.get("result"))
+
+    if language and "en" not in language:
+        # Assuming that en will be the default language of the report
+        translate_columns_and_result(
+            language=language,
+            columns=data["columns"],
+            result=data["result"])
 
     return ReportResult(data)
 
@@ -49,7 +60,7 @@ def array_result(columns, result):
     for obj in result:
         row = []
         for col in columns:
-            row.append(obj.get(col.get("fieldname")) or '')
+            row.append(obj.get(col.get("fieldname"), ''))
         out.append(row)
     return out
 
@@ -95,3 +106,15 @@ def objectify_columns(columns):
         cols.append(col)
 
     return cols
+
+
+def translate_columns_and_result(language: str, columns: List[dict], result: List[list]):
+    """
+    Translate all report values & column labels based on language
+    """
+    for col in columns:
+        col.label = renovation._(col.label, lang=language)
+
+    for row in result:
+        for idx, cell in enumerate(row):
+            row[idx] = renovation._(cell, lang=language)
