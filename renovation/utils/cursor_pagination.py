@@ -1,8 +1,6 @@
 import base64
 from typing import Any, Optional, TypedDict
-
 from asyncer import asyncify
-
 import frappe
 
 
@@ -17,17 +15,18 @@ class CursorPaginatorExecutionArgs(TypedDict):
 
 class CursorPaginator(object):
     def __init__(
-            self,
-            model,
-            filters=None,
-            or_filters = None,
-            fields=None,
-            skip_process_filters=False,
-            count_resolver=None,
-            node_resolver=None,
-            default_sorting_fields=None,
-            default_sorting_direction=None,
-            extra_args=None):
+        self,
+        model,
+        filters=None,
+        or_filters=None,
+        fields=None,
+        skip_process_filters=False,
+        count_resolver=None,
+        node_resolver=None,
+        default_sorting_fields=None,
+        default_sorting_direction=None,
+        extra_args=None
+    ):
 
         if (not count_resolver) != (not node_resolver):
             frappe.throw(
@@ -36,7 +35,7 @@ class CursorPaginator(object):
         self.doctype = model
         self.fields = fields
         self.predefined_filters = filters
-        self.or_filters=or_filters
+        self.or_filters = or_filters
         self.skip_process_filters = skip_process_filters
         self.custom_count_resolver = count_resolver
         self.custom_node_resolver = node_resolver
@@ -45,6 +44,19 @@ class CursorPaginator(object):
 
         # Extra Args are helpful for custom resolvers
         self.extra_args = extra_args
+
+        # initialize some args
+        self.before = None
+        self.after = None
+        self.first = None
+        self.last = None
+        self.sorting_fields = []
+        self.original_sort_dir = None
+        self.sort_dir = None
+        self.cursor = None
+        self.filters = []
+        self.has_next_page = False
+        self.has_previous_page = False
 
     async def execute(self, args: CursorPaginatorExecutionArgs):
 
@@ -114,7 +126,8 @@ class CursorPaginator(object):
             edges=edges
         )
 
-    def validate_connection_args(self, args: CursorPaginatorExecutionArgs):
+    @staticmethod
+    def validate_connection_args(args: CursorPaginatorExecutionArgs):
         first = args.get("first")
         last = args.get("last")
 
@@ -177,7 +190,7 @@ class CursorPaginator(object):
             or_filters=self.or_filters
         )
 
-    def get_sort_args(self, sorting_input=None):
+    def get_sort_args(self, sorting_input: dict = None):
         sort_dir = self.default_sorting_direction if self.default_sorting_direction in (
             "asc", "desc") else "desc"
         if not self.default_sorting_fields:
@@ -202,7 +215,8 @@ class CursorPaginator(object):
 
         return sorting_fields, sort_dir
 
-    def process_filters(self, input_filters):
+    @staticmethod
+    def process_filters(input_filters):
         filters = []
         operator_map = frappe._dict(
             EQ="=", NEQ="!=", LT="<", GT=">", LTE="<=", GTE=">=",
@@ -263,7 +277,7 @@ class CursorPaginator(object):
                 return column
             meta = frappe.get_meta(self.doctype)
             return f"`tab{self.doctype}`.{column}" if column in \
-                meta.get_valid_columns() else column
+                                                      meta.get_valid_columns() else column
 
         def db_escape(v):
             return frappe.db.escape(v)
@@ -271,19 +285,19 @@ class CursorPaginator(object):
         def _get_cursor_column_condition(operator, column, value, include_equals=False):
             if operator == ">":
                 return format_column_name(column) \
-                    + f" {operator}{'=' if include_equals else ''} " \
-                    + db_escape(value)
+                       + f" {operator}{'=' if include_equals else ''} " \
+                       + db_escape(value)
             else:
                 if value is None:
                     return format_column_name(column) \
-                        + " IS NULL"
+                           + " IS NULL"
                 return "(" \
-                    + format_column_name(column) \
-                    + f" {operator}{'=' if include_equals else ''} " \
-                    + db_escape(value) \
-                    + " OR " \
-                    + format_column_name(column) \
-                    + " IS NULL)"
+                       + format_column_name(column) \
+                       + f" {operator}{'=' if include_equals else ''} " \
+                       + db_escape(value) \
+                       + " OR " \
+                       + format_column_name(column) \
+                       + " IS NULL)"
 
         def _get_cursor_condition(sorting_fields, values):
             """
@@ -300,8 +314,8 @@ class CursorPaginator(object):
 
                 if sub_condition:
                     return f"(({format_column_name(sorting_fields[0])} IS NULL" \
-                        + "AND {sub_condition})" \
-                        + f" OR {format_column_name(sorting_fields[0])} IS NOT NULL)"
+                           + "AND {sub_condition})" \
+                           + f" OR {format_column_name(sorting_fields[0])} IS NOT NULL)"
                 return ""
 
             condition = _get_cursor_column_condition(
@@ -337,12 +351,14 @@ class CursorPaginator(object):
 
         return _get_cursor_condition(sorting_fields=self.sorting_fields, values=cursor_values)
 
-    def to_cursor(self, row, sorting_fields):
+    @staticmethod
+    def to_cursor(row, sorting_fields):
         # sorting_fields could be [custom_table.field_1],
         # where only field_1 will be available on row
         _json = frappe.as_json([row.get(x.split('.')[1] if '.' in x else x)
                                 for x in sorting_fields])
         return frappe.safe_decode(base64.b64encode(_json.encode("utf-8")))
 
-    def from_cursor(self, cursor):
+    @staticmethod
+    def from_cursor(cursor):
         return frappe.parse_json(frappe.safe_decode(base64.b64decode(cursor)))
