@@ -1,4 +1,4 @@
-from typing import List, Union, Tuple
+from typing import List, Union, Tuple, Type
 from asyncer import asyncify
 from aiodataloader import DataLoader
 from collections import OrderedDict
@@ -24,10 +24,9 @@ def get_model_dataloader(model: Union[RenovationModel, str]) -> DataLoader:
 
 
 def get_child_table_dataloader(
-        child_model: Union[RenovationModel, str],
-        parent_model: Union[RenovationModel, str],
+    child_model: Union[Type[RenovationModel], str],
+    parent_model: Union[Type[RenovationModel], str],
         parent_field: str) -> DataLoader:
-
     child_dt = child_model
     if not isinstance(child_dt, str):
         child_dt = child_model.get_doctype()

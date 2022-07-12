@@ -1,6 +1,6 @@
 import asyncio
 import inspect
-from typing import List, TypeVar
+from typing import List, TypeVar, Type
 
 import frappe
 import renovation
@@ -268,7 +268,7 @@ class RenovationTestFixture(FrappeTestFixture):
             await (_safe_async(d.setUp))()
             self._dependent_fixture_instances.append(d)
 
-    def get_dependent_fixture_instance(self, model: RenovationModel):
+    def get_dependent_fixture_instance(self, model: Type[RenovationModel]):
         if hasattr(
                 self,
                 "_dependent_fixture_instances") and isinstance(
