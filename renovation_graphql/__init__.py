@@ -16,7 +16,9 @@ async def graphql_resolver(body: dict):
     variables = body.variables
     operation_name = body.operationName
     output = await execute(query, variables, operation_name)
-    if len(output.get("errors", [])):
+    if len(output.get("errors", [])) and not renovation.local.flags.in_test:
+        if hasattr(renovation.local, 'db'):
+            renovation.local.db.rollback()
         await log_error(query, variables, operation_name, output)
         errors = []
         for err in output.errors:
@@ -116,7 +118,7 @@ def get_schema():
 
 def get_typedefs():
     schema = ""
-    for dir in renovation.get_hooks("graphql_sdl_dir"):
+    for dir in list(set(renovation.get_hooks("graphql_sdl_dir"))):
         """
         graphql_sdl_dir = "pms_app/graphql/types"
 
@@ -143,7 +145,7 @@ def load_schema_from_path(path: str) -> str:
 
 
 def execute_schema_processors(schema):
-    for cmd in renovation.get_hooks("graphql_schema_processors"):
+    for cmd in list(set(renovation.get_hooks("graphql_schema_processors"))):
         renovation.get_attr(cmd)(schema=schema)
 
 
