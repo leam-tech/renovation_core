@@ -281,7 +281,10 @@ class FrappeModel(Generic[T], Document):
         self.latest = None
 
     def run_method(self, method, *args, **kwargs):
-        """run standard triggers, plus those in hooks"""
+        """
+        Run standard triggers, plus those in hooks
+        This method is not async because it could be invoked from Frappe
+        """
         if "flags" in kwargs:
             del kwargs["flags"]
 
@@ -326,7 +329,10 @@ class FrappeModel(Generic[T], Document):
                 if inspect.iscoroutinefunction(fn):
                     return await fn(*args, **kwargs)
                 else:
-                    return fn(*args, **kwargs)
+                    v = fn(*args, **kwargs)
+                    if isinstance(v, asyncio.Task):
+                        return await asyncio.gather(v)
+                    return v
 
             return _inner
 
@@ -348,7 +354,7 @@ class FrappeModel(Generic[T], Document):
 
             doc_events = frappe.get_doc_hooks()
             for handler in doc_events.get(self.doctype, {}).get(method, []) \
-                           + doc_events.get("*", {}).get(method, []):
+                    + doc_events.get("*", {}).get(method, []):
                 hooks.append(frappe.get_attr(handler))
 
             composed = compose(f, *hooks)
