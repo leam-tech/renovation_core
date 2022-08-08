@@ -61,8 +61,11 @@ def generate_otp(medium="sms", medium_id=None, sms_hash=None, purpose="login", l
 
   # saving the hashed pin, not the pin as is
   hashed_pin = passlibctx.hash(otp)
-  expires_in_sec = (cint(frappe.db.get_value(
-      "System Settings", None, "verification_otp_validity")) or 15) * 60
+  verification_otp_validity = frappe.db.get_value(
+    "System Settings", None, "verification_otp_validity")
+  expires_in_sec = cint(verification_otp_validity) * 60 if verification_otp_validity else None
+  if not expires_in_sec:
+    return frappe._dict({"status": "fail", medium: medium_id})
 
   frappe.cache().set_value(
       get_otp_redis_key(

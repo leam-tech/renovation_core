@@ -83,8 +83,9 @@ def clear_cache_on_doc_events(doc, method):
 def get_dashboards_for_clear_cache(doctype):
   try:
     cache_key = '_{}_purge_cache'.format(doctype)
-    if frappe.cache().hget('dashboard', cache_key):
-      return frappe.cache().hget('dashboard', cache_key)
+    val = frappe.cache().hget('dashboard', cache_key)
+    if val is not None:
+      return val
     data = [x.parent for x in frappe.get_all('Renovation Purge Cache', {
                                              'link_doctype': doctype, 'parenttype': 'Renovation Dashboard'}, 'parent')]
     frappe.cache().hset('dashboard', cache_key, data)
