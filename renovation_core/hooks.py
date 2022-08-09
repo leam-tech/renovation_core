@@ -96,6 +96,7 @@ doctype_js = {
 # before_install = "renovation_core.install.before_install"
 after_install = "renovation_core.install.after_install.after_install"
 after_migrate = "renovation_core.install.after_migrate.after_migrate"
+after_sync = "renovation_core.install.after_sync.after_sync"
 
 # Desk Notifications
 # ------------------
