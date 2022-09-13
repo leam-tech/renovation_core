@@ -37,7 +37,7 @@ class FrappeTestFixture():
 
     def __init__(self):
         self.DEFAULT_DOCTYPE = None
-        self.TESTER_USER = renovation.user
+        self.TESTER_USER = str(renovation.user)
         self.dependent_fixtures = []
         self.fixtures = frappe._dict()
         self.duplicate = False
@@ -221,7 +221,7 @@ class RenovationTestFixture(FrappeTestFixture):
 
     def __init__(self):
         self.DEFAULT_MODEL: RenovationModel = None
-        self.TESTER_USER = renovation.user
+        self.TESTER_USER = str(renovation.user)
         self.dependent_fixtures = []
         self.fixtures = renovation._dict()
         self.duplicate = False
