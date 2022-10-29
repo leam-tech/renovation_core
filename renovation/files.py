@@ -24,8 +24,8 @@ async def get_private_file(filename: str):
 
 async def get_file_as_response(file_url: str):
 
-    name_of_file = frappe.get_value("File", {"file_url": file_url}, "name")
-    file = frappe.get_doc("File", name_of_file)
+    name_of_file = await asyncify(frappe.get_value)("File", {"file_url": file_url}, "name")
+    file = await asyncify(frappe.get_doc)("File", name_of_file)
 
     import mimetypes
     filetype = mimetypes.guess_type(file.file_url)[0]
