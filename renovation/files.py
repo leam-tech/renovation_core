@@ -25,6 +25,10 @@ async def get_private_file(filename: str):
 async def get_file_as_response(file_url: str):
 
     name_of_file = await asyncify(frappe.get_value)("File", {"file_url": file_url}, "name")
+
+    if not name_of_file:
+        raise HTTPException(status_code=404, detail="Not found")
+
     file = await asyncify(frappe.get_doc)("File", name_of_file)
 
     import mimetypes
