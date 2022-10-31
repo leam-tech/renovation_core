@@ -30,6 +30,9 @@ def get_app():
     info = load_renovation_app_info()
     frappe.destroy()
 
+    from .files import router as file_router
+    fastapi_app.include_router(file_router)
+
     # Load Renovation App Routers
     for app in info.apps:
         router = getattr(frappe.get_module(f"{app}.api"), "router", None)
