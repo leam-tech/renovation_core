@@ -297,7 +297,8 @@ class FrappeModel(Generic[T], Document):
         hooked = FrappeModel.hook(fn, method=method)
         try:
             # Support both sync & async contexts
-            _out = asyncio.create_task(hooked(self, *args, **kwargs))
+            if asyncio.get_running_loop():
+                _out = asyncio.create_task(hooked(self, *args, **kwargs))
         except RuntimeError:
             _out = asyncer.runnify(hooked)(self, *args, **kwargs)
 
