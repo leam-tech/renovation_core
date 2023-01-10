@@ -1,11 +1,11 @@
 import frappe
-from renovation_core.utils.images import after_file_delete, on_file_update
+from renovation_core.utils.images import after_file_delete, on_file_insert
 
 
 # onSave, check if image and ask to generate thumbnail
-def on_update(doc, method):
+def after_insert(doc, method):
   # thumbnail
-  on_file_update(doc)
+  on_file_insert(doc)
 
 
 def after_delete(doc, method):

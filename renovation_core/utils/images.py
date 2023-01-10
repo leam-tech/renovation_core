@@ -8,7 +8,7 @@ from frappe.utils import cint
 def is_image_path(path):
   if not path:
     return
-    
+
   # Skip external files
   if not path.startswith(("/files/", "/private/files/")):
     return
@@ -39,7 +39,7 @@ def get_file_path(path):
        + path).strip("/"))
 
 
-def on_file_update(doc):
+def on_file_insert(doc):
   if not is_image_path(doc.file_url):
     return
 
