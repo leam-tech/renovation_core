@@ -5,6 +5,7 @@ from typing import List, TypeVar, Type
 import frappe
 import renovation
 from renovation import RenovationModel
+from renovation.native_model import FrappeDocType
 
 T = TypeVar("T")
 
@@ -142,7 +143,11 @@ class FrappeTestFixture():
                 if not frappe.db.exists(dt, doc.name) or doc is None:
                     continue
 
-                doc.reload()
+                if type(doc) == FrappeDocType:
+                    doc._doc.reload()
+                else:
+                    doc.reload()
+
                 if doc.docstatus == 1:
                     doc.docstatus = 2
                     doc.save(ignore_permissions=True)
