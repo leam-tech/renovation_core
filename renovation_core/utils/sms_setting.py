@@ -31,7 +31,8 @@ def validate_receiver_nos(receiver_list):
 
 
 @frappe.whitelist()
-def send_sms(receiver_list, msg, sender_name='', success_msg=True, provider=None):
+def send_sms(receiver_list, msg, sender_name='', success_msg=True, provider=None,
+             is_sms_sent: Callable[[Response, dict], bool] = None):
   import json
   if isinstance(receiver_list, string_types):
     receiver_list = json.loads(receiver_list)
@@ -56,7 +57,7 @@ def send_sms(receiver_list, msg, sender_name='', success_msg=True, provider=None
     providers = provider
 
   if providers:
-    return send_via_gateway(arg, providers=providers)
+    return send_via_gateway(arg, providers=providers, is_sms_sent=is_sms_sent)
   else:
     frappe.throw(_("Please Update SMS Settings"))
 
