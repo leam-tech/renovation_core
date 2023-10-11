@@ -66,7 +66,7 @@ def get_default_sms_providers():
                                                                          "sms_settings") else [])
 
 
-def send_via_gateway(arg, providers):
+def send_via_gateway(arg, providers, raw_response=False):
   code_wise_provider, provider_wise_time = _get_provider_validate_data(providers)
   success_list = []
   error_message = []
@@ -106,9 +106,10 @@ def send_via_gateway(arg, providers):
     url = ss.sms_gateway_url
     if "%(" in url:
       url = ss.sms_gateway_url % args
-    status = send_request(url, {} if "%(" in ss.sms_gateway_url else args,
-                          headers, ss.use_post, ss.get('request_as_json'))
-    if 200 <= status < 300:
+    response = send_request(url, {} if "%(" in ss.sms_gateway_url else args,
+                          headers, ss.use_post, ss.get('request_as_json'),
+                          request_as_params=ss.request_as_params, raw_response=raw_response)
+    if 200 <= response.status_code if raw_response else response < 300:
       provider_wise_success_list.setdefault(selected_provider, []).append(d)
       success_list.append(d)
   log_doc = []
@@ -120,7 +121,8 @@ def send_via_gateway(arg, providers):
     if arg.get('success_msg'):
       frappe.msgprint(_("SMS sent to following numbers: {0}").format(
           "\n" + "\n".join(success_list)))
-  return log_doc and log_doc or success_list
+  _log = log_doc and log_doc or success_list
+  return (_log, response) if raw_response else _log
 
 
 def _get_country_code(number):
@@ -139,7 +141,8 @@ def _get_provider_validate_data(provider):
   return country_wise_provider, provider_wise_time
 
 
-def send_request(gateway_url, params, headers=None, use_post=False, request_as_json=False):
+def send_request(gateway_url, params, headers=None, use_post=False, request_as_json=False,
+                 request_as_params=False, raw_response=False):
   import requests
 
   if not headers:
@@ -147,12 +150,14 @@ def send_request(gateway_url, params, headers=None, use_post=False, request_as_j
   if use_post:
     if request_as_json:
       response = requests.post(gateway_url, headers=headers, json=params)
+    elif request_as_params:
+      response = requests.post(gateway_url, headers=headers, params=params)
     else:
       response = requests.post(gateway_url, headers=headers, data=params)
   else:
     response = requests.get(gateway_url, headers=headers, params=params)
 
-  return response.status_code
+  return response.status_code if not raw_response else response
 
 
 def safe_decode(string, encoding='utf-8'):
