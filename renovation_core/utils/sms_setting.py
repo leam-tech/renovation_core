@@ -68,7 +68,7 @@ def get_default_sms_providers():
                                                                          "sms_settings") else [])
 
 
-def send_via_gateway(arg, providers, response_validator: Callable[[Response], bool] = None):
+def send_via_gateway(arg, providers, is_sms_sent: Callable[[Response, dict], bool] = None):
   code_wise_provider, provider_wise_time = _get_provider_validate_data(providers)
   success_list = []
   error_message = []
@@ -111,8 +111,8 @@ def send_via_gateway(arg, providers, response_validator: Callable[[Response], bo
     response = send_request(url, {} if "%(" in ss.sms_gateway_url else args,
                           headers, ss.use_post, ss.get('request_as_json'),
                           request_as_params=ss.request_as_params)
-    if ((not response_validator and 200 <= response.status_code < 300)
-            or (response_validator and response_validator(response))):
+    sms_sent = is_sms_sent(response, selected_provider) if is_sms_sent else None
+    if (sms_sent is None and 200 <= response.status_code < 300) or sms_sent:
       provider_wise_success_list.setdefault(selected_provider, []).append(d)
       success_list.append(d)
   log_doc = []
