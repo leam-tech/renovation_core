@@ -1,5 +1,6 @@
 import ast
 import re
+from typing import Callable
 
 import frappe
 from frappe import throw, _
@@ -7,6 +8,7 @@ from frappe.core.doctype.sms_settings.sms_settings import get_headers
 from frappe.utils import now_datetime, nowtime, get_time
 from phonenumbers import parse as parse_phone_number
 from phonenumbers.phonenumberutil import region_code_for_country_code
+from requests import Response
 from six import string_types
 
 
@@ -29,7 +31,8 @@ def validate_receiver_nos(receiver_list):
 
 
 @frappe.whitelist()
-def send_sms(receiver_list, msg, sender_name='', success_msg=True, provider=None):
+def send_sms(receiver_list, msg, sender_name='', success_msg=True, provider=None,
+             is_sms_sent: Callable[[Response, dict], bool] = None):
   import json
   if isinstance(receiver_list, string_types):
     receiver_list = json.loads(receiver_list)
@@ -54,7 +57,7 @@ def send_sms(receiver_list, msg, sender_name='', success_msg=True, provider=None
     providers = provider
 
   if providers:
-    return send_via_gateway(arg, providers=providers)
+    return send_via_gateway(arg, providers=providers, is_sms_sent=is_sms_sent)
   else:
     frappe.throw(_("Please Update SMS Settings"))
 
@@ -66,7 +69,7 @@ def get_default_sms_providers():
                                                                          "sms_settings") else [])
 
 
-def send_via_gateway(arg, providers):
+def send_via_gateway(arg, providers, is_sms_sent: Callable[[Response, dict], bool] = None):
   code_wise_provider, provider_wise_time = _get_provider_validate_data(providers)
   success_list = []
   error_message = []
@@ -106,9 +109,11 @@ def send_via_gateway(arg, providers):
     url = ss.sms_gateway_url
     if "%(" in url:
       url = ss.sms_gateway_url % args
-    status = send_request(url, {} if "%(" in ss.sms_gateway_url else args,
-                          headers, ss.use_post, ss.get('request_as_json'))
-    if 200 <= status < 300:
+    response = send_request(url, {} if "%(" in ss.sms_gateway_url else args,
+                          headers, ss.use_post, ss.get('request_as_json'),
+                          request_as_params=ss.request_as_params)
+    sms_sent = is_sms_sent(response, selected_provider) if is_sms_sent else None
+    if (sms_sent is None and 200 <= response.status_code < 300) or sms_sent:
       provider_wise_success_list.setdefault(selected_provider, []).append(d)
       success_list.append(d)
   log_doc = []
@@ -139,7 +144,8 @@ def _get_provider_validate_data(provider):
   return country_wise_provider, provider_wise_time
 
 
-def send_request(gateway_url, params, headers=None, use_post=False, request_as_json=False):
+def send_request(gateway_url, params, headers=None, use_post=False, request_as_json=False,
+                 request_as_params=False):
   import requests
 
   if not headers:
@@ -147,12 +153,14 @@ def send_request(gateway_url, params, headers=None, use_post=False, request_as_j
   if use_post:
     if request_as_json:
       response = requests.post(gateway_url, headers=headers, json=params)
+    elif request_as_params:
+      response = requests.post(gateway_url, headers=headers, params=params)
     else:
       response = requests.post(gateway_url, headers=headers, data=params)
   else:
     response = requests.get(gateway_url, headers=headers, params=params)
 
-  return response.status_code
+  return response
 
 
 def safe_decode(string, encoding='utf-8'):

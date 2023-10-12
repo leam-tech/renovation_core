@@ -17,6 +17,7 @@
   "start_with_plus",
   "use_post",
   "request_as_json",
+  "request_as_params",
   "countries"
  ],
  "fields": [
@@ -98,11 +99,18 @@
    "fieldtype": "Table MultiSelect",
    "label": "Countries",
    "options": "SMS Provider Country"
+  },
+  {
+   "default": "0",
+   "depends_on": "use_post",
+   "fieldname": "request_as_params",
+   "fieldtype": "Check",
+   "label": "Request As Params"
   }
  ],
  "icon": "fa fa-cog",
  "links": [],
- "modified": "2020-11-29 20:15:21.103585",
+ "modified": "2023-10-11 11:07:18.564705",
  "modified_by": "Administrator",
  "module": "Renovation Core",
  "name": "SMS Provider",
