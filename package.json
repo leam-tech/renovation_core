@@ -4,7 +4,7 @@
   "description": "The Frappe App for Renovation Front-End SDK",
   "dependencies": {
     "cookie": "^0.3.1",
-    "express": "^4.16.2",
+    "express": "^4.18.2",
     "redis": "^2.8.0",
     "socket.io": "^2.0.4",
     "superagent": "^3.8.2"
